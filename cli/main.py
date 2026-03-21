@@ -97,8 +97,68 @@ def scan(
               help="Package registry to check")
 def check_package(package_name: str, registry: str) -> None:
     """Check if a package exists on a registry (hallucination detection)."""
-    console.print(f"[yellow]Package checker not yet implemented (Phase 3)[/]")
-    console.print(f"Will check: [cyan]{package_name}[/] on [cyan]{registry}[/]")
+    setup_logging(log_level="WARNING")
+    from core.package_checker import PackageChecker
+
+    checker = PackageChecker()
+    result = checker.check_package(package_name, registry)
+
+    if result.is_malicious:
+        console.print(f"[red bold]MALICIOUS[/] — {package_name} is in the known malicious package database")
+        console.print(f"  [red]{result.reason}[/]")
+        sys.exit(2)
+    elif result.is_typosquat:
+        console.print(f"[red]TYPOSQUAT[/] — '{package_name}' looks like a typosquat of '[cyan]{result.similar_to}[/]'")
+        console.print(f"  Edit distance: {result.distance}")
+        sys.exit(2)
+    elif not result.exists:
+        console.print(f"[yellow]NOT FOUND[/] — '{package_name}' not found on {registry}")
+        console.print(f"  This may be a hallucinated package name")
+        sys.exit(1)
+    else:
+        console.print(f"[green]OK[/] — '{package_name}' appears legitimate on {registry}")
+
+
+@cli.command(name="scan-packages")
+@click.option("--file", "-f", "file_path", required=True, help="File to scan for package imports")
+def scan_packages(file_path: str) -> None:
+    """Scan all imports in a file for hallucinated or malicious packages."""
+    setup_logging(log_level="WARNING")
+    from rich.table import Table
+    from core.package_checker import PackageChecker
+
+    if not Path(file_path).exists():
+        console.print(f"[red]File not found: {file_path}[/]")
+        sys.exit(1)
+
+    checker = PackageChecker()
+    results = checker.check_file_imports(file_path)
+
+    if not results:
+        console.print(f"[dim]No package imports found in {file_path}[/]")
+        return
+
+    table = Table(title=f"Package Verification — {file_path}")
+    table.add_column("Package", style="cyan")
+    table.add_column("Registry", width=8)
+    table.add_column("Status", width=12)
+    table.add_column("Risk", width=10)
+    table.add_column("Details")
+
+    risk_colors = {"safe": "green", "low": "green", "medium": "yellow", "high": "red", "critical": "red bold"}
+    status_icons = {"safe": "[green]OK[/]", "low": "[green]OK[/]", "medium": "[yellow]WARN[/]", "high": "[red]ALERT[/]", "critical": "[red bold]DANGER[/]"}
+
+    for r in results:
+        color = risk_colors.get(r.risk_level, "white")
+        status = status_icons.get(r.risk_level, "?")
+        table.add_row(r.package_name, r.registry, status, f"[{color}]{r.risk_level}[/]", r.reason or "—")
+
+    console.print(table)
+
+    critical = sum(1 for r in results if r.risk_level in ("high", "critical"))
+    if critical:
+        console.print(f"\n[red]{critical} package(s) require attention[/]")
+        sys.exit(2)
 
 
 @cli.command(name="scan-prompt")

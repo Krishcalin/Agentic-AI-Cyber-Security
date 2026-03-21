@@ -1,0 +1,85 @@
+# Known malicious packages — curated from public advisories
+# Sources: Phylum, Snyk, Socket.dev, PyPI security advisories
+# Updated: 2026-03-21
+
+packages:
+  # PyPI — confirmed malicious packages
+  - name: requesrs
+    registry: pypi
+    reason: Typosquat of 'requests' — data exfiltration
+  - name: request
+    registry: pypi
+    reason: Typosquat of 'requests' — credential theft
+  - name: python-binance
+    registry: pypi
+    reason: Typosquat of 'python-binance' — crypto wallet theft
+  - name: coloUrama
+    registry: pypi
+    reason: Typosquat of 'colorama' — backdoor
+  - name: crypt0graphy
+    registry: pypi
+    reason: Typosquat of 'cryptography' — key theft
+  - name: djangoo
+    registry: pypi
+    reason: Typosquat of 'django' — backdoor
+  - name: python3-dateutil
+    registry: pypi
+    reason: Typosquat of 'python-dateutil' — credential theft
+  - name: jeIlyfish
+    registry: pypi
+    reason: Typosquat of 'jellyfish' — SSH credential theft
+  - name: pypistats
+    registry: pypi
+    reason: Exfiltrates environment variables
+  - name: setup-tools
+    registry: pypi
+    reason: Typosquat of 'setuptools' — backdoor
+  - name: flassk
+    registry: pypi
+    reason: Typosquat of 'flask' — code execution
+  - name: numpyy
+    registry: pypi
+    reason: Typosquat of 'numpy' — backdoor
+  - name: openai-python
+    registry: pypi
+    reason: Typosquat of 'openai' — API key theft
+  - name: chatgpt
+    registry: pypi
+    reason: Fake package — credential harvesting
+
+  # npm — confirmed malicious packages
+  - name: event-stream
+    registry: npm
+    reason: Supply chain attack — crypto wallet theft (flatmap-stream)
+  - name: ua-parser-js-malicious
+    registry: npm
+    reason: Cryptominer and password stealer
+  - name: colors-malicious
+    registry: npm
+    reason: Infinite loop DoS
+  - name: faker-malicious
+    registry: npm
+    reason: Data corruption
+  - name: expresss
+    registry: npm
+    reason: Typosquat of 'express' — backdoor
+  - name: react-native-community
+    registry: npm
+    reason: Typosquat — exfiltrates env vars
+  - name: lod-ash
+    registry: npm
+    reason: Typosquat of 'lodash' — credential theft
+  - name: crossenv
+    registry: npm
+    reason: Typosquat of 'cross-env' — env var theft
+  - name: babelcli
+    registry: npm
+    reason: Typosquat of 'babel-cli' — credential theft
+  - name: mongose
+    registry: npm
+    reason: Typosquat of 'mongoose' — backdoor
+
+  # crates.io — confirmed malicious
+  - name: rustdecimal
+    registry: crates
+    reason: Typosquat of 'rust_decimal' — environment variable theft
