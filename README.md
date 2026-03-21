@@ -1,10 +1,16 @@
 # Agentic AI Cyber Security
 
+<p align="center">
+  <img src="banner.svg" alt="Agentic AI Cyber Security Banner" width="100%"/>
+</p>
+
 An open-source Python-based source code security analyzer that identifies security flaws, flags fictitious or non-existent dependencies, prevents prompt injection attacks, and delivers AI-driven semantic code analysis — accessible through MCP integrations with Claude Code or command-line interfaces and CI/CD pipelines.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Python 3.10+](https://img.shields.io/badge/Python-3.10%2B-blue.svg)](https://python.org)
 [![MCP](https://img.shields.io/badge/MCP-Compatible-8A2BE2.svg)](https://modelcontextprotocol.io)
+[![Rules](https://img.shields.io/badge/Rules-85-8b5cf6.svg)](#security-rules)
+[![SARIF](https://img.shields.io/badge/SARIF-2.1.0-10b981.svg)](#output-formats)
 
 ---
 
