@@ -1,0 +1,82 @@
+rules:
+  # ==========================================================================
+  # Cross-language secrets & credentials
+  # ==========================================================================
+  - id: common.secrets.generic-api-key
+    languages: [any]
+    severity: error
+    message: "API key or token found in source code"
+    cwe: CWE-798
+    owasp: "A07:2021"
+    patterns:
+      - 'sk-[a-zA-Z0-9]{20,}'
+      - 'ghp_[a-zA-Z0-9]{36}'
+      - 'github_pat_[a-zA-Z0-9]{22}_[a-zA-Z0-9]{59}'
+      - 'glpat-[a-zA-Z0-9\-]{20,}'
+      - 'xox[bpsa]-[a-zA-Z0-9\-]{10,}'
+    confidence: high
+
+  - id: common.secrets.generic-password
+    languages: [any]
+    severity: error
+    message: "Password string detected in source code"
+    cwe: CWE-798
+    patterns:
+      - 'PASSWORD\s*[:=]\s*["\'][^"\']{4,}["\']'
+      - 'DB_PASSWORD\s*[:=]\s*["\'][^"\']{4,}["\']'
+      - 'DATABASE_URL\s*[:=]\s*["\'].*:.*@'
+    confidence: medium
+
+  - id: common.secrets.connection-string
+    languages: [any]
+    severity: error
+    message: "Database connection string with credentials"
+    cwe: CWE-798
+    patterns:
+      - 'mongodb://\w+:\w+@'
+      - 'postgres://\w+:\w+@'
+      - 'mysql://\w+:\w+@'
+      - 'redis://:\w+@'
+    confidence: high
+
+  - id: common.secrets.private-key-file
+    languages: [any]
+    severity: error
+    message: "Private key content in source file"
+    cwe: CWE-321
+    patterns:
+      - 'BEGIN (RSA |EC |DSA |OPENSSH )?PRIVATE KEY'
+    confidence: high
+
+  # ==========================================================================
+  # IP addresses & URLs
+  # ==========================================================================
+  - id: common.network.hardcoded-ip
+    languages: [any]
+    severity: info
+    message: "Hardcoded IP address — use configuration or DNS"
+    cwe: CWE-547
+    patterns:
+      - '\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b'
+    confidence: low
+
+  - id: common.network.http-url
+    languages: [any]
+    severity: info
+    message: "HTTP URL (not HTTPS) — data in cleartext"
+    cwe: CWE-319
+    patterns:
+      - 'http://(?!localhost|127\.0\.0\.1|0\.0\.0\.0)'
+    confidence: low
+
+  # ==========================================================================
+  # TODO / FIXME markers with security implications
+  # ==========================================================================
+  - id: common.todo.security-todo
+    languages: [any]
+    severity: info
+    message: "Security-related TODO/FIXME/HACK comment found"
+    cwe: CWE-546
+    patterns:
+      - '(?:TODO|FIXME|HACK|XXX).*(?:secur|vuln|auth|password|credential|inject|xss|csrf|encrypt)'
+    confidence: low

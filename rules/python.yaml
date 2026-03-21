@@ -1,0 +1,513 @@
+rules:
+  # ==========================================================================
+  # Injection
+  # ==========================================================================
+  - id: python.injection.sql-format-string
+    languages: [python]
+    severity: error
+    message: "SQL query built with f-string — SQL injection risk"
+    cwe: CWE-89
+    owasp: "A03:2021"
+    patterns:
+      - 'cursor\.execute\s*\(\s*f["\']'
+      - '\.execute\s*\(\s*f["\'].*SELECT'
+      - '\.execute\s*\(\s*f["\'].*INSERT'
+      - '\.execute\s*\(\s*f["\'].*UPDATE'
+      - '\.execute\s*\(\s*f["\'].*DELETE'
+    confidence: high
+    fix_template: cwe_89
+
+  - id: python.injection.sql-percent-format
+    languages: [python]
+    severity: error
+    message: "SQL query built with % formatting — SQL injection risk"
+    cwe: CWE-89
+    owasp: "A03:2021"
+    patterns:
+      - 'cursor\.execute\s*\(\s*["\'].*%[sd]'
+      - '\.execute\s*\(\s*["\'].*%\s*\('
+    confidence: high
+
+  - id: python.injection.sql-string-concat
+    languages: [python]
+    severity: error
+    message: "SQL query built with string concatenation — SQL injection risk"
+    cwe: CWE-89
+    patterns:
+      - '\.execute\s*\(\s*["\'].*\+\s*\w+'
+      - '\.execute\s*\(\s*.*\.format\s*\('
+    confidence: medium
+
+  - id: python.injection.command-os-system
+    languages: [python]
+    severity: error
+    message: "os.system() with variable input — command injection risk"
+    cwe: CWE-78
+    owasp: "A03:2021"
+    patterns:
+      - 'os\.system\s*\(\s*f["\']'
+      - 'os\.system\s*\(\s*\w+\s*\+'
+      - 'os\.system\s*\(\s*.*\.format'
+      - 'os\.system\s*\(\s*.*%\s*\w+'
+    confidence: high
+
+  - id: python.injection.command-subprocess-shell
+    languages: [python]
+    severity: error
+    message: "subprocess with shell=True and variable input — command injection"
+    cwe: CWE-78
+    patterns:
+      - 'subprocess\.\w+\s*\(.*shell\s*=\s*True'
+    confidence: high
+
+  - id: python.injection.command-popen
+    languages: [python]
+    severity: warning
+    message: "os.popen() usage — prefer subprocess with list args"
+    cwe: CWE-78
+    patterns:
+      - 'os\.popen\s*\('
+    confidence: high
+
+  - id: python.injection.eval-usage
+    languages: [python]
+    severity: error
+    message: "eval() with dynamic input — code injection risk"
+    cwe: CWE-95
+    patterns:
+      - 'eval\s*\(\s*\w+[^)]*\)'
+      - 'eval\s*\(\s*f["\']'
+      - 'eval\s*\(\s*.*\.format'
+      - 'eval\s*\(\s*input\s*\('
+    confidence: high
+
+  - id: python.injection.exec-usage
+    languages: [python]
+    severity: error
+    message: "exec() with dynamic input — code execution risk"
+    cwe: CWE-95
+    patterns:
+      - 'exec\s*\(\s*\w+[^)]*\)'
+      - 'exec\s*\(\s*f["\']'
+      - 'exec\s*\(\s*.*\.format'
+    confidence: high
+
+  - id: python.injection.template-injection
+    languages: [python]
+    severity: error
+    message: "Template rendered with user input — server-side template injection"
+    cwe: CWE-1336
+    patterns:
+      - 'Template\s*\(\s*\w+'
+      - 'from_string\s*\(\s*\w+'
+      - 'render_template_string\s*\(\s*\w+'
+    confidence: medium
+
+  - id: python.injection.xpath-injection
+    languages: [python]
+    severity: warning
+    message: "XPath query with variable input — XPath injection risk"
+    cwe: CWE-643
+    patterns:
+      - '\.xpath\s*\(\s*f["\']'
+      - '\.xpath\s*\(\s*.*\.format'
+      - '\.xpath\s*\(\s*.*%\s*\w+'
+    confidence: medium
+
+  - id: python.injection.ldap-injection
+    languages: [python]
+    severity: warning
+    message: "LDAP query with variable input — LDAP injection risk"
+    cwe: CWE-90
+    patterns:
+      - 'ldap\.search\s*\(.*f["\']'
+      - 'ldap_filter\s*=\s*f["\']'
+    confidence: medium
+
+  # ==========================================================================
+  # Cryptography
+  # ==========================================================================
+  - id: python.crypto.weak-hash-md5
+    languages: [python]
+    severity: warning
+    message: "MD5 hash used — cryptographically broken"
+    cwe: CWE-328
+    patterns:
+      - 'hashlib\.md5\s*\('
+      - 'Crypto\.Hash\.MD5'
+      - "MD5\\.new\\s*\\("
+    confidence: high
+
+  - id: python.crypto.weak-hash-sha1
+    languages: [python]
+    severity: warning
+    message: "SHA1 hash used — cryptographically weak"
+    cwe: CWE-328
+    patterns:
+      - 'hashlib\.sha1\s*\('
+      - 'Crypto\.Hash\.SHA\b'
+    confidence: high
+
+  - id: python.crypto.weak-cipher-des
+    languages: [python]
+    severity: error
+    message: "DES cipher used — broken encryption"
+    cwe: CWE-327
+    patterns:
+      - 'DES\.\w+\s*\('
+      - 'Crypto\.Cipher\.DES'
+    confidence: high
+
+  - id: python.crypto.weak-cipher-rc4
+    languages: [python]
+    severity: error
+    message: "RC4 cipher used — broken encryption"
+    cwe: CWE-327
+    patterns:
+      - 'ARC4\.\w+\s*\('
+      - 'Crypto\.Cipher\.ARC4'
+    confidence: high
+
+  - id: python.crypto.weak-random
+    languages: [python]
+    severity: warning
+    message: "random module used for security — use secrets module instead"
+    cwe: CWE-330
+    patterns:
+      - 'random\.random\s*\('
+      - 'random\.randint\s*\('
+      - 'random\.choice\s*\('
+      - 'random\.randrange\s*\('
+    confidence: medium
+
+  - id: python.crypto.hardcoded-iv
+    languages: [python]
+    severity: warning
+    message: "Hardcoded initialization vector — use random IV"
+    cwe: CWE-329
+    patterns:
+      - 'iv\s*=\s*b["\'][^"\']{16,}["\']'
+      - 'IV\s*=\s*b["\']'
+    confidence: medium
+
+  - id: python.crypto.ecb-mode
+    languages: [python]
+    severity: warning
+    message: "ECB mode used — insecure block cipher mode"
+    cwe: CWE-327
+    patterns:
+      - 'MODE_ECB'
+      - 'mode\s*=\s*.*ECB'
+    confidence: high
+
+  # ==========================================================================
+  # Credentials & Secrets
+  # ==========================================================================
+  - id: python.secrets.hardcoded-password
+    languages: [python]
+    severity: error
+    message: "Hardcoded password detected"
+    cwe: CWE-798
+    owasp: "A07:2021"
+    patterns:
+      - 'password\s*=\s*["\'][^"\']{4,}["\']'
+      - 'passwd\s*=\s*["\'][^"\']{4,}["\']'
+      - 'secret\s*=\s*["\'][^"\']{4,}["\']'
+      - 'api_key\s*=\s*["\'][^"\']{4,}["\']'
+    confidence: medium
+
+  - id: python.secrets.hardcoded-token
+    languages: [python]
+    severity: error
+    message: "Hardcoded API token or key detected"
+    cwe: CWE-798
+    patterns:
+      - 'token\s*=\s*["\'][A-Za-z0-9_\-]{20,}["\']'
+      - 'TOKEN\s*=\s*["\'][A-Za-z0-9_\-]{20,}["\']'
+      - 'API_KEY\s*=\s*["\'][A-Za-z0-9_\-]{20,}["\']'
+    confidence: medium
+
+  - id: python.secrets.aws-key
+    languages: [python]
+    severity: error
+    message: "AWS access key ID detected in source code"
+    cwe: CWE-798
+    patterns:
+      - 'AKIA[0-9A-Z]{16}'
+    confidence: high
+
+  - id: python.secrets.private-key
+    languages: [python]
+    severity: error
+    message: "Private key embedded in source code"
+    cwe: CWE-321
+    patterns:
+      - 'BEGIN RSA PRIVATE KEY'
+      - 'BEGIN EC PRIVATE KEY'
+      - 'BEGIN PRIVATE KEY'
+      - 'BEGIN DSA PRIVATE KEY'
+    confidence: high
+
+  # ==========================================================================
+  # Deserialization
+  # ==========================================================================
+  - id: python.deserialize.pickle-load
+    languages: [python]
+    severity: error
+    message: "pickle.load() on untrusted data — arbitrary code execution"
+    cwe: CWE-502
+    patterns:
+      - 'pickle\.load\s*\('
+      - 'pickle\.loads\s*\('
+      - 'cPickle\.load\s*\('
+      - 'cPickle\.loads\s*\('
+    confidence: high
+
+  - id: python.deserialize.yaml-unsafe
+    languages: [python]
+    severity: error
+    message: "yaml.load() without SafeLoader — code execution risk"
+    cwe: CWE-502
+    patterns:
+      - 'yaml\.load\s*\([^)]*(?!Loader\s*=\s*yaml\.SafeLoader)[^)]*\)'
+      - 'yaml\.load\s*\(\s*\w+\s*\)'
+    confidence: high
+
+  - id: python.deserialize.shelve
+    languages: [python]
+    severity: warning
+    message: "shelve module uses pickle internally — deserialization risk"
+    cwe: CWE-502
+    patterns:
+      - 'shelve\.open\s*\('
+    confidence: medium
+
+  - id: python.deserialize.marshal
+    languages: [python]
+    severity: warning
+    message: "marshal.loads() on untrusted data — unsafe deserialization"
+    cwe: CWE-502
+    patterns:
+      - 'marshal\.loads\s*\('
+    confidence: medium
+
+  # ==========================================================================
+  # Network / SSL
+  # ==========================================================================
+  - id: python.network.ssl-verify-disabled
+    languages: [python]
+    severity: error
+    message: "SSL verification disabled — man-in-the-middle risk"
+    cwe: CWE-295
+    owasp: "A07:2021"
+    patterns:
+      - 'verify\s*=\s*False'
+      - 'CERT_NONE'
+      - 'check_hostname\s*=\s*False'
+    confidence: high
+
+  - id: python.network.bind-all-interfaces
+    languages: [python]
+    severity: warning
+    message: "Server bound to 0.0.0.0 — accessible from all networks"
+    cwe: CWE-200
+    patterns:
+      - '\.bind\s*\(\s*["\']0\.0\.0\.0["\']'
+      - 'host\s*=\s*["\']0\.0\.0\.0["\']'
+    confidence: medium
+
+  - id: python.network.http-no-timeout
+    languages: [python]
+    severity: info
+    message: "HTTP request without timeout — potential hang/DoS"
+    cwe: CWE-400
+    patterns:
+      - 'requests\.(get|post|put|delete|patch)\s*\([^)]*(?!timeout)[^)]*\)'
+    confidence: low
+
+  # ==========================================================================
+  # File & Path
+  # ==========================================================================
+  - id: python.path.traversal
+    languages: [python]
+    severity: error
+    message: "Path constructed from user input — path traversal risk"
+    cwe: CWE-22
+    owasp: "A01:2021"
+    patterns:
+      - 'open\s*\(\s*f["\']'
+      - 'open\s*\(\s*.*\+\s*\w+'
+      - 'open\s*\(\s*os\.path\.join\s*\(\s*\w+.*\w+'
+    confidence: medium
+
+  - id: python.path.tempfile-insecure
+    languages: [python]
+    severity: warning
+    message: "tempfile.mktemp() is insecure — use mkstemp() or NamedTemporaryFile"
+    cwe: CWE-377
+    patterns:
+      - 'tempfile\.mktemp\s*\('
+    confidence: high
+
+  - id: python.path.chmod-world-writable
+    languages: [python]
+    severity: warning
+    message: "File permissions set to world-writable"
+    cwe: CWE-732
+    patterns:
+      - 'os\.chmod\s*\(.*0o*777'
+      - 'os\.chmod\s*\(.*0o*666'
+    confidence: high
+
+  # ==========================================================================
+  # Django / Flask / FastAPI
+  # ==========================================================================
+  - id: python.django.debug-enabled
+    languages: [python]
+    severity: error
+    message: "Django DEBUG=True in production code"
+    cwe: CWE-489
+    patterns:
+      - 'DEBUG\s*=\s*True'
+    confidence: medium
+
+  - id: python.django.secret-key-hardcoded
+    languages: [python]
+    severity: error
+    message: "Django SECRET_KEY hardcoded in source"
+    cwe: CWE-798
+    patterns:
+      - 'SECRET_KEY\s*=\s*["\'][^"\']{10,}["\']'
+    confidence: high
+
+  - id: python.django.csrf-exempt
+    languages: [python]
+    severity: warning
+    message: "CSRF protection disabled via @csrf_exempt"
+    cwe: CWE-352
+    owasp: "A01:2021"
+    patterns:
+      - '@csrf_exempt'
+    confidence: high
+
+  - id: python.django.raw-sql
+    languages: [python]
+    severity: warning
+    message: "Django raw SQL query — use ORM or parameterized queries"
+    cwe: CWE-89
+    patterns:
+      - '\.raw\s*\(\s*f["\']'
+      - '\.extra\s*\(\s*.*where\s*='
+    confidence: high
+
+  - id: python.flask.debug-mode
+    languages: [python]
+    severity: error
+    message: "Flask debug mode enabled — exposes debugger and code"
+    cwe: CWE-489
+    patterns:
+      - 'app\.run\s*\(.*debug\s*=\s*True'
+      - 'FLASK_DEBUG\s*=\s*1'
+    confidence: high
+
+  - id: python.flask.xss-no-escape
+    languages: [python]
+    severity: warning
+    message: "Markup() or |safe used — potential XSS if user input"
+    cwe: CWE-79
+    owasp: "A03:2021"
+    patterns:
+      - 'Markup\s*\(\s*\w+'
+      - '\|\s*safe\b'
+    confidence: medium
+
+  # ==========================================================================
+  # Logging & Error Handling
+  # ==========================================================================
+  - id: python.logging.sensitive-data
+    languages: [python]
+    severity: warning
+    message: "Sensitive data may be logged (password, token, key, secret)"
+    cwe: CWE-532
+    patterns:
+      - 'log(ging)?\..*password'
+      - 'log(ging)?\..*token'
+      - 'log(ging)?\..*secret'
+      - 'log(ging)?\..*api_key'
+      - 'print\s*\(.*password'
+    confidence: low
+
+  - id: python.error.broad-except
+    languages: [python]
+    severity: info
+    message: "Broad except clause — may swallow important errors"
+    cwe: CWE-396
+    patterns:
+      - 'except\s*:'
+      - 'except\s+Exception\s*:'
+    confidence: low
+
+  - id: python.error.pass-in-except
+    languages: [python]
+    severity: info
+    message: "Empty except with pass — errors silently ignored"
+    cwe: CWE-390
+    patterns:
+      - 'except.*:\s*\n\s*pass\b'
+    confidence: low
+
+  # ==========================================================================
+  # Miscellaneous
+  # ==========================================================================
+  - id: python.misc.assert-security
+    languages: [python]
+    severity: warning
+    message: "assert used for security check — removed with -O flag"
+    cwe: CWE-617
+    patterns:
+      - 'assert\s+.*(?:auth|permission|access|role|admin|token|password)'
+    confidence: medium
+
+  - id: python.misc.compile-exec
+    languages: [python]
+    severity: warning
+    message: "compile() + exec() pattern — dynamic code execution"
+    cwe: CWE-95
+    patterns:
+      - 'compile\s*\([^)]+\)\s*\n.*exec\s*\('
+      - 'exec\s*\(\s*compile\s*\('
+    confidence: high
+
+  - id: python.misc.importlib-import
+    languages: [python]
+    severity: info
+    message: "Dynamic module import — verify source is trusted"
+    cwe: CWE-502
+    patterns:
+      - 'importlib\.import_module\s*\(\s*\w+'
+      - '__import__\s*\(\s*\w+'
+    confidence: low
+
+  - id: python.misc.xml-external-entity
+    languages: [python]
+    severity: error
+    message: "XML parsing without disabling external entities — XXE risk"
+    cwe: CWE-611
+    owasp: "A05:2021"
+    patterns:
+      - 'xml\.etree\.ElementTree\.parse\s*\('
+      - 'xml\.dom\.minidom\.parse\s*\('
+      - 'xml\.sax\.parse\s*\('
+      - 'lxml\.etree\.parse\s*\('
+    confidence: medium
+
+  - id: python.misc.zipslip
+    languages: [python]
+    severity: warning
+    message: "Zip extraction without path validation — zip slip risk"
+    cwe: CWE-22
+    patterns:
+      - '\.extractall\s*\('
+      - 'ZipFile.*\.extract\s*\('
+      - 'tarfile.*\.extractall\s*\('
+    confidence: medium

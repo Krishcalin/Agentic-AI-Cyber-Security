@@ -1,0 +1,357 @@
+rules:
+  # ==========================================================================
+  # Injection
+  # ==========================================================================
+  - id: javascript.injection.sql-template-literal
+    languages: [javascript, typescript]
+    severity: error
+    message: "SQL query built with template literal — SQL injection risk"
+    cwe: CWE-89
+    owasp: "A03:2021"
+    patterns:
+      - '\.query\s*\(\s*`.*\$\{'
+      - '\.execute\s*\(\s*`.*\$\{'
+      - '\.raw\s*\(\s*`.*\$\{'
+    confidence: high
+
+  - id: javascript.injection.sql-concat
+    languages: [javascript, typescript]
+    severity: error
+    message: "SQL query built with string concatenation — SQL injection"
+    cwe: CWE-89
+    patterns:
+      - '\.query\s*\(\s*["\'].*\+\s*\w+'
+      - '\.execute\s*\(\s*["\'].*\+\s*\w+'
+    confidence: high
+
+  - id: javascript.injection.command-exec
+    languages: [javascript, typescript]
+    severity: error
+    message: "child_process.exec() with variable input — command injection"
+    cwe: CWE-78
+    owasp: "A03:2021"
+    patterns:
+      - 'exec\s*\(\s*`.*\$\{'
+      - 'exec\s*\(\s*\w+\s*\+'
+      - 'exec\s*\(\s*.*\.concat'
+      - 'execSync\s*\(\s*`.*\$\{'
+    confidence: high
+
+  - id: javascript.injection.eval-usage
+    languages: [javascript, typescript]
+    severity: error
+    message: "eval() usage — code injection risk"
+    cwe: CWE-95
+    patterns:
+      - '\beval\s*\('
+    confidence: high
+
+  - id: javascript.injection.function-constructor
+    languages: [javascript, typescript]
+    severity: error
+    message: "new Function() with dynamic input — code injection"
+    cwe: CWE-95
+    patterns:
+      - 'new\s+Function\s*\('
+    confidence: high
+
+  - id: javascript.injection.settimeout-string
+    languages: [javascript, typescript]
+    severity: warning
+    message: "setTimeout/setInterval with string argument — implicit eval"
+    cwe: CWE-95
+    patterns:
+      - 'setTimeout\s*\(\s*["\']'
+      - 'setInterval\s*\(\s*["\']'
+      - 'setTimeout\s*\(\s*\w+[^,)]*\)'
+    confidence: medium
+
+  - id: javascript.injection.regex-dos
+    languages: [javascript, typescript]
+    severity: warning
+    message: "RegExp with user input — ReDoS risk"
+    cwe: CWE-1333
+    patterns:
+      - 'new\s+RegExp\s*\(\s*\w+'
+      - 'RegExp\s*\(\s*req\.'
+    confidence: medium
+
+  # ==========================================================================
+  # XSS
+  # ==========================================================================
+  - id: javascript.xss.innerhtml
+    languages: [javascript, typescript]
+    severity: error
+    message: "innerHTML assignment — XSS risk if user input"
+    cwe: CWE-79
+    owasp: "A03:2021"
+    patterns:
+      - '\.innerHTML\s*='
+      - '\.outerHTML\s*='
+    confidence: high
+
+  - id: javascript.xss.document-write
+    languages: [javascript, typescript]
+    severity: error
+    message: "document.write() — XSS risk"
+    cwe: CWE-79
+    patterns:
+      - 'document\.write\s*\('
+      - 'document\.writeln\s*\('
+    confidence: high
+
+  - id: javascript.xss.dangerously-set-html
+    languages: [javascript, typescript]
+    severity: warning
+    message: "dangerouslySetInnerHTML in React — ensure input is sanitized"
+    cwe: CWE-79
+    patterns:
+      - 'dangerouslySetInnerHTML'
+    confidence: high
+
+  - id: javascript.xss.dom-manipulation
+    languages: [javascript, typescript]
+    severity: warning
+    message: "DOM manipulation with user input — XSS vector"
+    cwe: CWE-79
+    patterns:
+      - '\.insertAdjacentHTML\s*\('
+      - '\.createContextualFragment\s*\('
+    confidence: medium
+
+  # ==========================================================================
+  # Cryptography
+  # ==========================================================================
+  - id: javascript.crypto.weak-hash
+    languages: [javascript, typescript]
+    severity: warning
+    message: "Weak hash algorithm (MD5/SHA1) — use SHA-256+"
+    cwe: CWE-328
+    patterns:
+      - "createHash\\s*\\(\\s*['\"]md5['\"]"
+      - "createHash\\s*\\(\\s*['\"]sha1['\"]"
+    confidence: high
+
+  - id: javascript.crypto.math-random
+    languages: [javascript, typescript]
+    severity: warning
+    message: "Math.random() for security — use crypto.getRandomValues()"
+    cwe: CWE-330
+    patterns:
+      - 'Math\.random\s*\('
+    confidence: medium
+
+  - id: javascript.crypto.weak-jwt
+    languages: [javascript, typescript]
+    severity: error
+    message: "JWT with 'none' algorithm or weak key — token forgery risk"
+    cwe: CWE-347
+    patterns:
+      - "algorithm.*['\"]none['\"]"
+      - "algorithms.*\\[.*['\"]none['\"]"
+      - 'expiresIn.*["\']0'
+    confidence: medium
+
+  # ==========================================================================
+  # Credentials & Secrets
+  # ==========================================================================
+  - id: javascript.secrets.hardcoded-password
+    languages: [javascript, typescript]
+    severity: error
+    message: "Hardcoded password or secret in source code"
+    cwe: CWE-798
+    owasp: "A07:2021"
+    patterns:
+      - 'password\s*[:=]\s*["\'][^"\']{4,}["\']'
+      - 'secret\s*[:=]\s*["\'][^"\']{4,}["\']'
+      - 'apiKey\s*[:=]\s*["\'][^"\']{4,}["\']'
+      - 'api_key\s*[:=]\s*["\'][^"\']{4,}["\']'
+    confidence: medium
+
+  - id: javascript.secrets.aws-key
+    languages: [javascript, typescript]
+    severity: error
+    message: "AWS access key ID detected in source code"
+    cwe: CWE-798
+    patterns:
+      - 'AKIA[0-9A-Z]{16}'
+    confidence: high
+
+  - id: javascript.secrets.jwt-hardcoded
+    languages: [javascript, typescript]
+    severity: error
+    message: "Hardcoded JWT secret key"
+    cwe: CWE-798
+    patterns:
+      - 'jwt\.sign\s*\([^,]+,\s*["\'][^"\']{5,}["\']'
+      - 'JWT_SECRET\s*=\s*["\'][^"\']{5,}["\']'
+    confidence: high
+
+  # ==========================================================================
+  # Deserialization
+  # ==========================================================================
+  - id: javascript.deserialize.json-parse-no-catch
+    languages: [javascript, typescript]
+    severity: info
+    message: "JSON.parse() without error handling — may crash on malformed input"
+    cwe: CWE-20
+    patterns:
+      - 'JSON\.parse\s*\(\s*req\.'
+      - 'JSON\.parse\s*\(\s*body'
+    confidence: low
+
+  - id: javascript.deserialize.unserialize
+    languages: [javascript, typescript]
+    severity: error
+    message: "node-serialize unserialize — arbitrary code execution"
+    cwe: CWE-502
+    patterns:
+      - 'unserialize\s*\('
+      - 'node-serialize'
+    confidence: high
+
+  # ==========================================================================
+  # Network / SSL
+  # ==========================================================================
+  - id: javascript.network.tls-reject-disabled
+    languages: [javascript, typescript]
+    severity: error
+    message: "TLS certificate verification disabled"
+    cwe: CWE-295
+    patterns:
+      - 'NODE_TLS_REJECT_UNAUTHORIZED.*0'
+      - 'rejectUnauthorized\s*:\s*false'
+    confidence: high
+
+  - id: javascript.network.cors-wildcard
+    languages: [javascript, typescript]
+    severity: warning
+    message: "CORS allows all origins (*) — overly permissive"
+    cwe: CWE-942
+    patterns:
+      - "Access-Control-Allow-Origin.*['\"]\\*['\"]"
+      - "origin\\s*:\\s*['\"]\\*['\"]"
+      - 'cors\\(\\)'
+    confidence: medium
+
+  - id: javascript.network.http-server
+    languages: [javascript, typescript]
+    severity: info
+    message: "HTTP server without HTTPS — data transmitted in cleartext"
+    cwe: CWE-319
+    patterns:
+      - 'http\.createServer\s*\('
+      - 'app\.listen\s*\(\s*\d+'
+    confidence: low
+
+  # ==========================================================================
+  # Express / Node.js
+  # ==========================================================================
+  - id: javascript.express.no-helmet
+    languages: [javascript, typescript]
+    severity: warning
+    message: "Express app without helmet — missing security headers"
+    cwe: CWE-693
+    patterns:
+      - 'express\(\)'
+    confidence: low
+
+  - id: javascript.express.no-rate-limit
+    languages: [javascript, typescript]
+    severity: info
+    message: "Express endpoint without rate limiting — DoS risk"
+    cwe: CWE-770
+    patterns:
+      - 'app\.(get|post|put|delete|patch)\s*\('
+    confidence: low
+
+  - id: javascript.express.body-size
+    languages: [javascript, typescript]
+    severity: info
+    message: "Express body parser without size limit"
+    cwe: CWE-400
+    patterns:
+      - 'bodyParser\.json\s*\(\s*\)'
+      - 'express\.json\s*\(\s*\)'
+    confidence: low
+
+  # ==========================================================================
+  # File & Path
+  # ==========================================================================
+  - id: javascript.path.traversal
+    languages: [javascript, typescript]
+    severity: error
+    message: "File path from user input — path traversal risk"
+    cwe: CWE-22
+    owasp: "A01:2021"
+    patterns:
+      - 'fs\.\w+\s*\(\s*req\.'
+      - 'fs\.\w+\s*\(\s*`.*\$\{.*req'
+      - 'path\.join\s*\(.*req\.'
+    confidence: high
+
+  - id: javascript.path.directory-listing
+    languages: [javascript, typescript]
+    severity: warning
+    message: "Directory listing enabled — information disclosure"
+    cwe: CWE-548
+    patterns:
+      - 'serveIndex\s*\('
+      - 'express\.static\s*\(.*index\s*:\s*true'
+    confidence: medium
+
+  # ==========================================================================
+  # Prototype Pollution
+  # ==========================================================================
+  - id: javascript.prototype.merge-pollution
+    languages: [javascript, typescript]
+    severity: error
+    message: "Deep merge without prototype check — prototype pollution risk"
+    cwe: CWE-1321
+    patterns:
+      - 'Object\.assign\s*\(\s*\{\}'
+      - '\.merge\s*\(\s*\w+'
+      - '\.extend\s*\(\s*true'
+      - 'lodash\.merge\s*\('
+      - '_\.merge\s*\('
+    confidence: medium
+
+  - id: javascript.prototype.bracket-assignment
+    languages: [javascript, typescript]
+    severity: warning
+    message: "Dynamic property assignment — potential prototype pollution"
+    cwe: CWE-1321
+    patterns:
+      - '\[\s*\w+\s*\]\s*\[\s*\w+\s*\]\s*='
+      - '\[\s*key\s*\]\s*='
+    confidence: low
+
+  # ==========================================================================
+  # Miscellaneous
+  # ==========================================================================
+  - id: javascript.misc.debugger
+    languages: [javascript, typescript]
+    severity: warning
+    message: "debugger statement left in code"
+    cwe: CWE-489
+    patterns:
+      - '^\s*debugger\s*;?\s*$'
+    confidence: high
+
+  - id: javascript.misc.console-log
+    languages: [javascript, typescript]
+    severity: style
+    message: "console.log left in code — remove for production"
+    cwe: CWE-532
+    patterns:
+      - 'console\.log\s*\('
+    confidence: low
+
+  - id: javascript.misc.alert
+    languages: [javascript, typescript]
+    severity: style
+    message: "alert() usage — remove for production"
+    cwe: CWE-489
+    patterns:
+      - '\balert\s*\('
+    confidence: low
