@@ -206,6 +206,71 @@ def scan_prompt(text: str) -> None:
     sys.exit(2 if result.risk_level in ("critical", "high") else 1)
 
 
+@cli.command()
+@click.option("--file", "-f", "file_path", required=True, help="File to generate fixes for")
+@click.option("--rules-dir", default="rules", help="Path to rules directory")
+@click.option("--apply", is_flag=True, help="Apply fixes to file (modifies in-place)")
+def fix(file_path: str, rules_dir: str, apply: bool) -> None:
+    """Auto-fix detected vulnerabilities in a file."""
+    setup_logging(log_level="WARNING")
+    from core.fix_generator import FixGenerator
+
+    if not Path(file_path).exists():
+        console.print(f"[red]File not found: {file_path}[/]")
+        sys.exit(1)
+
+    engine = ScanEngine(rules_dir=rules_dir)
+    engine.initialize()
+    scan_result = engine.scan_file(file_path)
+
+    if scan_result.total_findings == 0:
+        console.print(f"[green]No findings to fix in {file_path}[/]")
+        return
+
+    gen = FixGenerator()
+    fix_result = gen.generate_fixes(scan_result.all_findings)
+
+    if fix_result.fix_count == 0:
+        console.print(f"[yellow]{scan_result.total_findings} findings but no auto-fixes available[/]")
+        return
+
+    from rich.table import Table
+    table = Table(title=f"Auto-Fix Results — {file_path}")
+    table.add_column("Line", width=6, justify="right")
+    table.add_column("CWE", width=10)
+    table.add_column("Fix", ratio=1)
+    table.add_column("Confidence", width=10)
+
+    for f in fix_result.fixes:
+        table.add_row(
+            str(f.finding.line_number),
+            f.cwe,
+            f.explanation[:70],
+            f.confidence,
+        )
+
+    console.print(table)
+    console.print(f"\n[green]{fix_result.fix_count} fixes available[/], [dim]{fix_result.unfixable_count} unfixable[/]")
+
+    if apply:
+        # Apply fixes to file
+        content = Path(file_path).read_text(encoding="utf-8")
+        lines = content.splitlines()
+        for f in sorted(fix_result.fixes, key=lambda x: x.finding.line_number, reverse=True):
+            idx = f.finding.line_number - 1
+            if 0 <= idx < len(lines):
+                lines[idx] = f.fixed_line
+        Path(file_path).write_text("\n".join(lines) + "\n", encoding="utf-8")
+        console.print(f"[green]Fixes applied to {file_path}[/]")
+    else:
+        # Show diff
+        diff = fix_result.generate_diff(file_path)
+        if diff:
+            from rich.syntax import Syntax
+            console.print(Syntax(diff, "diff", theme="monokai"))
+        console.print(f"\n[dim]Run with --apply to apply fixes[/]")
+
+
 @cli.command(name="scan-diff")
 @click.option("--base", "-b", default="main", help="Base branch/ref to diff against")
 def scan_diff(base: str) -> None:
