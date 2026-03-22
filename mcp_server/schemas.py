@@ -137,4 +137,21 @@ def get_tool_definitions() -> list[dict[str, Any]]:
                 "properties": {},
             },
         },
+        {
+            "name": "semantic_review",
+            "description": "AI-powered semantic code review using Claude or OpenAI. Provides context-aware security analysis where the same code pattern gets different verdicts based on project type (web app vs CLI tool vs library).",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "file_path": {"type": "string", "description": "Path to the file to review"},
+                    "code": {"type": "string", "description": "Code snippet to review (alternative to file_path)"},
+                    "language": {"type": "string", "description": "Language of the code snippet", "default": "python"},
+                    "provider": {"type": "string", "enum": ["claude", "openai"], "default": "claude"},
+                },
+                "oneOf": [
+                    {"required": ["file_path"]},
+                    {"required": ["code", "language"]},
+                ],
+            },
+        },
     ]

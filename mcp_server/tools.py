@@ -1,4 +1,4 @@
-"""MCP tool handlers — implements all 11 scanner tools."""
+"""MCP tool handlers — implements all 12 scanner tools."""
 
 from __future__ import annotations
 
@@ -13,6 +13,7 @@ from core.fix_generator import FixGenerator
 from core.grader import calculate_grade, calculate_score, grade_label
 from core.package_checker import PackageChecker
 from core.prompt_scanner import PromptScanner
+from core.semantic_reviewer import SemanticReviewer
 
 log = structlog.get_logger("mcp_tools")
 
@@ -26,6 +27,12 @@ class ToolHandlers:
         self.fix_gen = FixGenerator()
         self.pkg_checker = PackageChecker()
         self.prompt_scanner = PromptScanner(rules_path="rules/prompt_injection.yaml")
+        self.semantic_reviewer: SemanticReviewer | None = None  # Lazy init (needs API key)
+
+    def _get_reviewer(self, provider: str = "claude") -> SemanticReviewer:
+        if self.semantic_reviewer is None or self.semantic_reviewer.provider_name != provider:
+            self.semantic_reviewer = SemanticReviewer(provider=provider)
+        return self.semantic_reviewer
 
     def handle(self, tool_name: str, arguments: dict[str, Any]) -> dict[str, Any]:
         """Route a tool call to the appropriate handler."""
@@ -41,6 +48,7 @@ class ToolHandlers:
             "scan_dockerfile": self._scan_dockerfile,
             "scan_iac": self._scan_iac,
             "scanner_health": self._scanner_health,
+            "semantic_review": self._semantic_review,
         }
 
         handler = handlers.get(tool_name)
@@ -363,6 +371,53 @@ class ToolHandlers:
             "status": "healthy",
             "rules_loaded": self.engine.rules_loaded,
             "prompt_patterns": self.prompt_scanner.pattern_count,
-            "engines": ["pattern_matcher", "ast_analyzer", "taint_tracker", "package_checker", "prompt_scanner", "fix_generator"],
+            "engines": ["pattern_matcher", "ast_analyzer", "taint_tracker", "package_checker", "prompt_scanner", "fix_generator", "semantic_reviewer"],
             "supported_languages": ["python", "javascript", "typescript", "java", "go", "php", "ruby", "c", "cpp", "dockerfile", "terraform", "kubernetes"],
+        }
+
+    # ── semantic_review ────────────────────────────────────────────────
+
+    def _semantic_review(self, args: dict[str, Any]) -> dict[str, Any]:
+        file_path = args.get("file_path")
+        code = args.get("code")
+        language = args.get("language", "python")
+        provider = args.get("provider", "claude")
+
+        try:
+            reviewer = self._get_reviewer(provider)
+        except Exception as e:
+            return {"error": f"Failed to initialize reviewer: {e}"}
+
+        if file_path:
+            if not Path(file_path).exists():
+                return {"error": f"File not found: {file_path}"}
+            result = reviewer.review_file(file_path)
+        elif code:
+            result = reviewer.review_code(code, language)
+        else:
+            return {"error": "Provide either file_path or code"}
+
+        if result.error:
+            return {"error": result.error}
+
+        return {
+            "summary": result.summary,
+            "intent_analysis": result.intent_analysis,
+            "project_type": result.project_type,
+            "findings": [
+                {
+                    "title": f.title,
+                    "severity": f.severity,
+                    "description": f.description,
+                    "line_start": f.line_start,
+                    "cwe": f.cwe,
+                    "fix_suggestion": f.fix_suggestion,
+                    "confidence": f.confidence,
+                    "category": f.category,
+                }
+                for f in result.findings
+            ],
+            "tokens_used": result.tokens_used,
+            "review_time_ms": round(result.review_time_ms, 1),
+            "provider": result.provider,
         }

@@ -287,11 +287,91 @@ def mcp_serve(rules_dir: str) -> None:
 
 
 @cli.command()
-@click.option("--file", "-f", "file_path", required=True, help="File to review")
-@click.option("--provider", default="claude", type=click.Choice(["claude", "openai"]))
-def review(file_path: str, provider: str) -> None:
-    """AI-powered semantic code review."""
-    console.print(f"[yellow]Semantic reviewer not yet implemented (Phase 7)[/]")
+@click.option("--file", "-f", "file_path", default=None, help="File to review")
+@click.option("--code", "-c", default=None, help="Code string to review")
+@click.option("--language", "-l", default="python", help="Language of code string")
+@click.option("--provider", default="claude", type=click.Choice(["claude", "openai", "mock"]))
+@click.option("--model", default=None, help="Model override (e.g., claude-opus-4-20250514)")
+@click.option("--format", "output_format", default="terminal", type=click.Choice(["terminal", "json"]))
+def review(file_path: str | None, code: str | None, language: str, provider: str,
+           model: str | None, output_format: str) -> None:
+    """AI-powered semantic code review using Claude or OpenAI."""
+    setup_logging(log_level="WARNING")
+    from core.semantic_reviewer import SemanticReviewer
+
+    if not file_path and not code:
+        console.print("[red]Error: specify --file or --code[/]")
+        sys.exit(1)
+
+    try:
+        reviewer = SemanticReviewer(provider=provider, model=model)
+    except Exception as e:
+        console.print(f"[red]Failed to initialize {provider}: {e}[/]")
+        sys.exit(1)
+
+    if file_path:
+        if not Path(file_path).exists():
+            console.print(f"[red]File not found: {file_path}[/]")
+            sys.exit(1)
+        result = reviewer.review_file(file_path)
+    else:
+        result = reviewer.review_code(code, language)
+
+    if result.error:
+        console.print(f"[yellow]Review error: {result.error}[/]")
+
+    if output_format == "json":
+        import json
+        data = {
+            "summary": result.summary,
+            "intent_analysis": result.intent_analysis,
+            "project_type": result.project_type,
+            "findings": [{"title": f.title, "severity": f.severity, "description": f.description,
+                          "cwe": f.cwe, "fix": f.fix_suggestion, "line": f.line_start}
+                         for f in result.findings],
+            "tokens_used": result.tokens_used,
+            "review_time_ms": round(result.review_time_ms, 1),
+            "provider": result.provider,
+        }
+        console.print(json.dumps(data, indent=2))
+        return
+
+    # Terminal output
+    from rich.panel import Panel
+    from rich.table import Table
+
+    if result.summary:
+        console.print(Panel(result.summary, title="[bold]Security Summary[/]", border_style="blue"))
+
+    if result.intent_analysis:
+        console.print(f"\n[dim]Intent:[/] {result.intent_analysis}")
+        console.print(f"[dim]Project type:[/] {result.project_type}")
+
+    if result.findings:
+        table = Table(title=f"Semantic Findings ({result.finding_count})")
+        table.add_column("Sev", width=8)
+        table.add_column("Line", width=6, justify="right")
+        table.add_column("Title", ratio=1)
+        table.add_column("CWE", width=10)
+
+        sev_colors = {"critical": "red bold", "high": "red", "medium": "yellow", "low": "cyan", "info": "dim"}
+        for f in result.findings:
+            color = sev_colors.get(f.severity, "white")
+            table.add_row(f"[{color}]{f.severity.upper()}[/]", str(f.line_start), f.title, f.cwe)
+
+        console.print(table)
+
+        # Show details for high/critical
+        for f in result.findings:
+            if f.severity in ("critical", "high"):
+                console.print(f"\n[red bold]{f.title}[/] (line {f.line_start})")
+                console.print(f"  {f.description}")
+                if f.fix_suggestion:
+                    console.print(f"  [green]Fix: {f.fix_suggestion}[/]")
+    else:
+        console.print("\n[green]No security issues found by semantic review.[/]")
+
+    console.print(f"\n[dim]Provider: {result.provider} | Tokens: {result.tokens_used} | Time: {result.review_time_ms:.0f}ms[/]")
 
 
 @cli.command(name="list-rules")
