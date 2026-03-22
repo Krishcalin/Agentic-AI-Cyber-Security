@@ -78,8 +78,8 @@ def scan(
             if not output_path:
                 console.print(output)
         case "sarif":
-            sarif_reporter = SarifReporter()
-            sarif_reporter.generate(result, output_path=output_path or "results.sarif")
+            from integrations.sarif_exporter import generate_sarif
+            generate_sarif(result, output_path=output_path or "results.sarif")
             console.print(f"SARIF report: [cyan]{output_path or 'results.sarif'}[/]")
 
     # Exit code based on findings
@@ -272,10 +272,87 @@ def fix(file_path: str, rules_dir: str, apply: bool) -> None:
 
 
 @cli.command(name="scan-diff")
-@click.option("--base", "-b", default="main", help="Base branch/ref to diff against")
-def scan_diff(base: str) -> None:
-    """Scan only files changed in git diff."""
-    console.print(f"[yellow]Git diff scanning not yet implemented (Phase 9)[/]")
+@click.option("--base", "-b", default="HEAD", help="Base ref to diff against")
+@click.option("--directory", "-d", default=".", help="Project directory")
+@click.option("--format", "-o", "output_format", default="terminal",
+              type=click.Choice(["terminal", "json", "sarif"]))
+@click.option("--output", "output_path", default=None, help="Write output to file")
+@click.option("--rules-dir", default="rules", help="Path to rules directory")
+@click.option("--fail-on", default="error", type=click.Choice(["error", "warning", "info"]),
+              help="Minimum severity to fail CI on")
+def scan_diff(base: str, directory: str, output_format: str, output_path: str | None,
+              rules_dir: str, fail_on: str) -> None:
+    """Scan only files changed in git diff — ideal for CI/CD."""
+    import subprocess as sp
+    setup_logging(log_level="WARNING")
+
+    try:
+        diff_output = sp.run(
+            ["git", "diff", "--name-only", base],
+            capture_output=True, text=True, cwd=directory, timeout=30,
+        )
+        if diff_output.returncode != 0:
+            console.print(f"[red]git diff failed: {diff_output.stderr.strip()}[/]")
+            sys.exit(1)
+
+        changed = [f.strip() for f in diff_output.stdout.strip().splitlines() if f.strip()]
+    except (sp.TimeoutExpired, FileNotFoundError) as e:
+        console.print(f"[red]git not available: {e}[/]")
+        sys.exit(1)
+
+    if not changed:
+        console.print("[green]No changed files to scan.[/]")
+        sys.exit(0)
+
+    console.print(f"[dim]Scanning {len(changed)} changed files vs {base}...[/]")
+
+    engine = ScanEngine(rules_dir=rules_dir)
+    engine.initialize()
+
+    from core.models import FileResult, ScanResult
+    from datetime import datetime
+    import uuid
+
+    all_file_results: list[FileResult] = []
+    for file in changed:
+        full = str(Path(directory) / file)
+        if Path(full).exists():
+            result = engine.scan_file(full)
+            all_file_results.extend(result.file_results)
+
+    scan_result = ScanResult(
+        scan_id=uuid.uuid4().hex[:8],
+        target=f"git diff {base}",
+        file_results=all_file_results,
+        start_time=datetime.now(),
+        end_time=datetime.now(),
+        rules_loaded=engine.rules_loaded,
+        total_files=len(all_file_results),
+        total_lines=sum(fr.lines_scanned for fr in all_file_results),
+    )
+    from core.grader import calculate_grade
+    scan_result.grade = calculate_grade(scan_result)
+
+    match output_format:
+        case "terminal":
+            reporter = TerminalReporter(console=console, verbosity="compact")
+            reporter.print_result(scan_result)
+        case "json":
+            json_reporter = JsonReporter()
+            output = json_reporter.generate(scan_result, output_path=output_path)
+            if not output_path:
+                console.print(output)
+        case "sarif":
+            from integrations.sarif_exporter import generate_sarif
+            generate_sarif(scan_result, output_path=output_path or "results.sarif")
+            console.print(f"SARIF report: [cyan]{output_path or 'results.sarif'}[/]")
+
+    # CI exit code
+    from integrations.github_actions import get_exit_code
+    code = get_exit_code(scan_result, fail_on=fail_on)
+    if code > 0:
+        console.print(f"[red]CI FAIL — findings at or above '{fail_on}' severity[/]")
+    sys.exit(code)
 
 
 @cli.command(name="mcp-serve")

@@ -1,0 +1,23 @@
+- id: agentic-security-scan
+  name: Agentic AI Security Scan
+  description: Scan staged files for security vulnerabilities
+  entry: python main.py scan --file
+  language: python
+  types_or: [python, javascript, typescript, java, go, php, ruby, c, c++]
+  additional_dependencies: ["click>=8.0", "pyyaml>=6.0", "rich>=13.0", "structlog>=23.0"]
+
+- id: agentic-package-check
+  name: Agentic AI Package Check
+  description: Check imports for hallucinated or malicious packages
+  entry: python main.py scan-packages --file
+  language: python
+  files: (requirements\.txt|package\.json|go\.mod|Cargo\.toml|Gemfile)$
+  additional_dependencies: ["click>=8.0", "pyyaml>=6.0", "rich>=13.0", "structlog>=23.0"]
+
+- id: agentic-prompt-check
+  name: Agentic AI Prompt Injection Check
+  description: Scan files for embedded prompt injection patterns
+  entry: python main.py scan --file
+  language: python
+  types_or: [python, javascript, typescript, yaml, json, markdown]
+  additional_dependencies: ["click>=8.0", "pyyaml>=6.0", "rich>=13.0", "structlog>=23.0"]

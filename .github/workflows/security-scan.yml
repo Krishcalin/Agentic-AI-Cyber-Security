@@ -1,0 +1,50 @@
+# Template: Security scan workflow for user projects
+# Copy this file to your project's .github/workflows/ directory
+
+name: Security Scan
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  security-events: write  # Required for SARIF upload
+
+jobs:
+  security-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Agentic AI Security Scanner
+        run: |
+          git clone https://github.com/Krishcalin/Agentic-AI-Cyber-Security.git /tmp/scanner
+          pip install -r /tmp/scanner/requirements.txt
+
+      - name: Run security scan
+        run: |
+          python /tmp/scanner/main.py scan \
+            --project . \
+            --format sarif \
+            --output results.sarif
+        continue-on-error: true
+
+      - name: Upload SARIF to GitHub Code Scanning
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: results.sarif
+
+      - name: Scan summary
+        if: always()
+        run: |
+          python /tmp/scanner/main.py scan \
+            --project . \
+            --format terminal \
+            --verbosity minimal
