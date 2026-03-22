@@ -279,9 +279,11 @@ def scan_diff(base: str) -> None:
 
 
 @cli.command(name="mcp-serve")
-def mcp_serve() -> None:
-    """Start MCP server for Claude Code integration."""
-    console.print(f"[yellow]MCP server not yet implemented (Phase 6)[/]")
+@click.option("--rules-dir", default="rules", help="Path to rules directory")
+def mcp_serve(rules_dir: str) -> None:
+    """Start MCP server for Claude Code / Cursor / Windsurf integration."""
+    from mcp_server.server import run_server
+    run_server(rules_dir=rules_dir)
 
 
 @cli.command()
