@@ -165,7 +165,45 @@ def scan_packages(file_path: str) -> None:
 @click.option("--text", "-t", required=True, help="Text to scan for prompt injection")
 def scan_prompt(text: str) -> None:
     """Detect prompt injection patterns in text."""
-    console.print(f"[yellow]Prompt scanner not yet implemented (Phase 4)[/]")
+    setup_logging(log_level="WARNING")
+    from core.prompt_scanner import PromptScanner
+
+    scanner = PromptScanner(rules_path="rules/prompt_injection.yaml")
+    result = scanner.scan_text(text)
+
+    if result.is_safe:
+        console.print(f"[green]SAFE[/] — No prompt injection patterns detected")
+        console.print(f"[dim]Scanned {result.input_length} characters against {scanner.pattern_count} patterns[/]")
+        return
+
+    risk_colors = {"critical": "red bold", "high": "red", "medium": "yellow", "low": "cyan"}
+    color = risk_colors.get(result.risk_level, "white")
+    console.print(f"[{color}]INJECTION DETECTED[/] — Risk: [{color}]{result.risk_level.upper()}[/]")
+    console.print(f"[dim]{result.finding_count} pattern(s) matched in {result.scan_time_ms:.1f}ms[/]\n")
+
+    from rich.table import Table
+    table = Table(show_header=True, header_style="bold")
+    table.add_column("Risk", width=10)
+    table.add_column("Category", width=20)
+    table.add_column("Description", ratio=1)
+    table.add_column("Matched", width=40)
+
+    for f in result.findings:
+        rc = risk_colors.get(f.risk, "white")
+        table.add_row(
+            f"[{rc}]{f.risk.upper()}[/]",
+            f.category,
+            f.description,
+            f.matched_text[:40] + ("..." if len(f.matched_text) > 40 else ""),
+        )
+
+    console.print(table)
+    summary = scanner.get_risk_summary(result)
+    if summary["by_category"]:
+        cats = ", ".join(f"{k}: {v}" for k, v in summary["by_category"].items())
+        console.print(f"\n[dim]Categories: {cats}[/]")
+
+    sys.exit(2 if result.risk_level in ("critical", "high") else 1)
 
 
 @cli.command(name="scan-diff")
