@@ -355,6 +355,102 @@ def scan_diff(base: str, directory: str, output_format: str, output_path: str | 
     sys.exit(code)
 
 
+@cli.command(name="audit-mcp")
+@click.option("--tools-json", "-t", required=True, help="Path to MCP tools/list JSON response")
+@click.option("--server-name", "-n", default="unknown", help="MCP server name")
+def audit_mcp(tools_json: str, server_name: str) -> None:
+    """Audit an MCP server's tool definitions for security vulnerabilities."""
+    import json as json_mod
+    setup_logging(log_level="WARNING")
+    from core.mcp_auditor import MCPAuditor
+
+    p = Path(tools_json)
+    if not p.exists():
+        console.print(f"[red]File not found: {tools_json}[/]")
+        sys.exit(1)
+
+    data = json_mod.loads(p.read_text(encoding="utf-8"))
+    tools = data if isinstance(data, list) else data.get("tools", [])
+
+    auditor = MCPAuditor()
+    result = auditor.audit_tools(tools, server_name=server_name)
+
+    risk_colors = {"critical": "red bold", "high": "red", "medium": "yellow", "low": "cyan"}
+    grade_colors = {"A": "green bold", "B": "green", "C": "yellow", "D": "red", "F": "red bold"}
+
+    from rich.panel import Panel
+    from rich.text import Text
+    header = Text()
+    header.append(f"MCP Server: {server_name}\n", style="bold")
+    header.append(f"Grade: ", style="bold")
+    header.append(f"{result.grade} ", style=grade_colors.get(result.grade, "white"))
+    header.append(f"({result.score}/100)\n")
+    header.append(f"Tools: {result.total_tools} | Findings: {result.finding_count}")
+    console.print(Panel(header, title="MCP Security Audit", border_style="purple"))
+
+    if result.findings:
+        from rich.table import Table
+        table = Table(show_header=True, header_style="bold")
+        table.add_column("Risk", width=10)
+        table.add_column("Tool", width=20)
+        table.add_column("Category", width=15)
+        table.add_column("Finding", ratio=1)
+
+        for f in result.findings:
+            color = risk_colors.get(f.risk, "white")
+            table.add_row(f"[{color}]{f.risk.upper()}[/]", f.tool_name, f.category, f.title)
+        console.print(table)
+
+    sys.exit(2 if result.critical_count > 0 else 1 if result.high_count > 0 else 0)
+
+
+@cli.command(name="scan-rag")
+@click.option("--file", "-f", "file_path", default=None, help="Single document to scan")
+@click.option("--directory", "-d", default=None, help="Directory of documents to scan")
+def scan_rag(file_path: str | None, directory: str | None) -> None:
+    """Scan documents for RAG pipeline security issues (injection, data leakage)."""
+    setup_logging(log_level="WARNING")
+    from core.rag_scanner import RAGScanner
+
+    if not file_path and not directory:
+        console.print("[red]Error: specify --file or --directory[/]")
+        sys.exit(1)
+
+    scanner = RAGScanner()
+
+    if file_path:
+        if not Path(file_path).exists():
+            console.print(f"[red]File not found: {file_path}[/]")
+            sys.exit(1)
+        findings = scanner.scan_file(file_path)
+        console.print(f"[bold]RAG Document Scan: {file_path}[/]")
+    else:
+        result = scanner.scan_directory(directory)
+        findings = result.findings
+        console.print(f"[bold]RAG Directory Scan: {directory}[/]")
+        console.print(f"[dim]Documents: {result.total_documents} | With issues: {result.documents_with_issues}[/]")
+
+    if not findings:
+        console.print("[green]No RAG security issues found.[/]")
+        return
+
+    from rich.table import Table
+    risk_colors = {"critical": "red bold", "high": "red", "medium": "yellow", "low": "cyan"}
+    table = Table(title=f"RAG Findings ({len(findings)})")
+    table.add_column("Risk", width=10)
+    table.add_column("Category", width=20)
+    table.add_column("Finding", ratio=1)
+    table.add_column("File", width=30)
+
+    for f in findings:
+        color = risk_colors.get(f.risk, "white")
+        table.add_row(f"[{color}]{f.risk.upper()}[/]", f.category, f.title, f.source_file or "—")
+    console.print(table)
+
+    critical = sum(1 for f in findings if f.risk in ("critical", "high"))
+    sys.exit(2 if critical > 0 else 1)
+
+
 @cli.command(name="mcp-serve")
 @click.option("--rules-dir", default="rules", help="Path to rules directory")
 def mcp_serve(rules_dir: str) -> None:

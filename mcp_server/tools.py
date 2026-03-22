@@ -1,4 +1,4 @@
-"""MCP tool handlers — implements all 12 scanner tools."""
+"""MCP tool handlers — implements all 15 scanner tools."""
 
 from __future__ import annotations
 
@@ -11,9 +11,12 @@ import structlog
 from core.engine import ScanEngine
 from core.fix_generator import FixGenerator
 from core.grader import calculate_grade, calculate_score, grade_label
+from core.mcp_auditor import MCPAuditor
 from core.package_checker import PackageChecker
 from core.prompt_scanner import PromptScanner
+from core.rag_scanner import RAGScanner
 from core.semantic_reviewer import SemanticReviewer
+from core.tool_response_analyzer import ToolResponseAnalyzer
 
 log = structlog.get_logger("mcp_tools")
 
@@ -27,6 +30,9 @@ class ToolHandlers:
         self.fix_gen = FixGenerator()
         self.pkg_checker = PackageChecker()
         self.prompt_scanner = PromptScanner(rules_path="rules/prompt_injection.yaml")
+        self.mcp_auditor = MCPAuditor()
+        self.rag_scanner = RAGScanner()
+        self.response_analyzer = ToolResponseAnalyzer()
         self.semantic_reviewer: SemanticReviewer | None = None  # Lazy init (needs API key)
 
     def _get_reviewer(self, provider: str = "claude") -> SemanticReviewer:
@@ -49,6 +55,9 @@ class ToolHandlers:
             "scan_iac": self._scan_iac,
             "scanner_health": self._scanner_health,
             "semantic_review": self._semantic_review,
+            "audit_mcp_server": self._audit_mcp_server,
+            "scan_rag_document": self._scan_rag_document,
+            "analyze_tool_response": self._analyze_tool_response,
         }
 
         handler = handlers.get(tool_name)
@@ -371,7 +380,7 @@ class ToolHandlers:
             "status": "healthy",
             "rules_loaded": self.engine.rules_loaded,
             "prompt_patterns": self.prompt_scanner.pattern_count,
-            "engines": ["pattern_matcher", "ast_analyzer", "taint_tracker", "package_checker", "prompt_scanner", "fix_generator", "semantic_reviewer"],
+            "engines": ["pattern_matcher", "ast_analyzer", "taint_tracker", "package_checker", "prompt_scanner", "fix_generator", "semantic_reviewer", "mcp_auditor", "rag_scanner", "tool_response_analyzer"],
             "supported_languages": ["python", "javascript", "typescript", "java", "go", "php", "ruby", "c", "cpp", "dockerfile", "terraform", "kubernetes"],
         }
 
@@ -420,4 +429,81 @@ class ToolHandlers:
             "tokens_used": result.tokens_used,
             "review_time_ms": round(result.review_time_ms, 1),
             "provider": result.provider,
+        }
+
+    # ── audit_mcp_server ───────────────────────────────────────────────
+
+    def _audit_mcp_server(self, args: dict[str, Any]) -> dict[str, Any]:
+        tools = args.get("tools", [])
+        server_name = args.get("server_name", "unknown")
+
+        if not tools:
+            return {"error": "Provide 'tools' array (MCP tools/list response)"}
+
+        result = self.mcp_auditor.audit_tools(tools, server_name=server_name)
+        return {
+            "server": server_name,
+            "grade": result.grade,
+            "score": result.score,
+            "total_tools": result.total_tools,
+            "findings_count": result.finding_count,
+            "critical": result.critical_count,
+            "high": result.high_count,
+            "tool_risks": result.tool_risks,
+            "findings": [
+                {"tool": f.tool_name, "risk": f.risk, "category": f.category,
+                 "title": f.title, "remediation": f.remediation}
+                for f in result.findings
+            ],
+        }
+
+    # ── scan_rag_document ──────────────────────────────────────────────
+
+    def _scan_rag_document(self, args: dict[str, Any]) -> dict[str, Any]:
+        content = args.get("content")
+        file_path = args.get("file_path")
+
+        if file_path:
+            if not Path(file_path).exists():
+                return {"error": f"File not found: {file_path}"}
+            findings = self.rag_scanner.scan_file(file_path)
+            source = file_path
+        elif content:
+            findings = self.rag_scanner.scan_document(content, source_file="<input>")
+            source = "<input>"
+        else:
+            return {"error": "Provide 'content' or 'file_path'"}
+
+        return {
+            "source": source,
+            "is_safe": len(findings) == 0,
+            "findings_count": len(findings),
+            "findings": [
+                {"category": f.category, "risk": f.risk, "title": f.title,
+                 "line": f.line_number, "matched": f.matched_text[:100]}
+                for f in findings
+            ],
+        }
+
+    # ── analyze_tool_response ──────────────────────────────────────────
+
+    def _analyze_tool_response(self, args: dict[str, Any]) -> dict[str, Any]:
+        tool_name = args.get("tool_name", "unknown")
+        response = args.get("response", "")
+
+        if not response:
+            return {"error": "Provide 'response' text to analyze"}
+
+        result = self.response_analyzer.analyze(tool_name, response)
+        return {
+            "tool": tool_name,
+            "is_safe": result.is_safe,
+            "risk_level": result.risk_level,
+            "findings_count": result.finding_count,
+            "findings": [
+                {"category": f.category, "risk": f.risk, "title": f.title,
+                 "matched": f.matched_text[:100]}
+                for f in result.findings
+            ],
+            "sanitized_output": result.sanitized_output[:1000] if not result.is_safe else "",
         }
