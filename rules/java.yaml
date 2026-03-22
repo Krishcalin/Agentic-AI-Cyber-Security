@@ -1,0 +1,274 @@
+rules:
+  # SQL Injection
+  - id: java.injection.sql-concat
+    languages: [java]
+    severity: error
+    message: "SQL query built with string concatenation — SQL injection"
+    cwe: CWE-89
+    owasp: "A03:2021"
+    patterns:
+      - 'Statement.*execute\w*\s*\(\s*.*\+'
+      - 'createQuery\s*\(\s*.*\+'
+      - '\.execute\w*\s*\(\s*".*"\s*\+\s*\w+'
+    confidence: high
+
+  - id: java.injection.sql-format
+    languages: [java]
+    severity: error
+    message: "SQL query with String.format — SQL injection"
+    cwe: CWE-89
+    patterns:
+      - 'String\.format\s*\(\s*".*(?:SELECT|INSERT|UPDATE|DELETE).*%s'
+    confidence: high
+
+  # Command Injection
+  - id: java.injection.runtime-exec
+    languages: [java]
+    severity: error
+    message: "Runtime.exec() with user input — command injection"
+    cwe: CWE-78
+    patterns:
+      - 'Runtime\.getRuntime\(\)\.exec\s*\('
+    confidence: high
+
+  - id: java.injection.processbuilder
+    languages: [java]
+    severity: warning
+    message: "ProcessBuilder usage — verify input is sanitized"
+    cwe: CWE-78
+    patterns:
+      - 'new\s+ProcessBuilder\s*\('
+    confidence: medium
+
+  # XSS
+  - id: java.xss.response-write
+    languages: [java]
+    severity: error
+    message: "Direct output to response without encoding — XSS"
+    cwe: CWE-79
+    owasp: "A03:2021"
+    patterns:
+      - 'response\.getWriter\(\)\.write\s*\(\s*request\.'
+      - 'response\.getWriter\(\)\.print\s*\(\s*request\.'
+      - 'out\.println\s*\(\s*request\.getParameter'
+    confidence: high
+
+  # Deserialization
+  - id: java.deserialize.objectinputstream
+    languages: [java]
+    severity: error
+    message: "ObjectInputStream.readObject() — unsafe deserialization"
+    cwe: CWE-502
+    patterns:
+      - 'ObjectInputStream.*readObject\s*\('
+      - 'new\s+ObjectInputStream\s*\('
+    confidence: high
+
+  - id: java.deserialize.xmldecoder
+    languages: [java]
+    severity: error
+    message: "XMLDecoder usage — unsafe deserialization"
+    cwe: CWE-502
+    patterns:
+      - 'new\s+XMLDecoder\s*\('
+      - 'XMLDecoder.*readObject'
+    confidence: high
+
+  # Cryptography
+  - id: java.crypto.weak-hash
+    languages: [java]
+    severity: warning
+    message: "Weak hash algorithm (MD5/SHA1)"
+    cwe: CWE-328
+    patterns:
+      - 'MessageDigest\.getInstance\s*\(\s*"MD5"'
+      - 'MessageDigest\.getInstance\s*\(\s*"SHA-?1"'
+    confidence: high
+
+  - id: java.crypto.weak-cipher
+    languages: [java]
+    severity: error
+    message: "Weak cipher (DES/RC4/Blowfish)"
+    cwe: CWE-327
+    patterns:
+      - 'Cipher\.getInstance\s*\(\s*"DES'
+      - 'Cipher\.getInstance\s*\(\s*"RC4'
+      - 'Cipher\.getInstance\s*\(\s*"Blowfish'
+    confidence: high
+
+  - id: java.crypto.ecb-mode
+    languages: [java]
+    severity: warning
+    message: "ECB mode cipher — insecure"
+    cwe: CWE-327
+    patterns:
+      - 'Cipher\.getInstance\s*\(\s*"AES/ECB'
+      - 'Cipher\.getInstance\s*\(\s*".*ECB.*"'
+    confidence: high
+
+  - id: java.crypto.insecure-random
+    languages: [java]
+    severity: warning
+    message: "java.util.Random for security — use SecureRandom"
+    cwe: CWE-330
+    patterns:
+      - 'new\s+Random\s*\('
+      - 'java\.util\.Random'
+    confidence: medium
+
+  - id: java.crypto.hardcoded-key
+    languages: [java]
+    severity: error
+    message: "Hardcoded cryptographic key"
+    cwe: CWE-321
+    patterns:
+      - 'new\s+SecretKeySpec\s*\(\s*"[^"]+"\.'
+      - 'SecretKeySpec\s*\(\s*new\s+byte\[\]'
+    confidence: medium
+
+  # Credentials
+  - id: java.secrets.hardcoded-password
+    languages: [java]
+    severity: error
+    message: "Hardcoded password in source code"
+    cwe: CWE-798
+    patterns:
+      - 'password\s*=\s*"[^"]{4,}"'
+      - 'passwd\s*=\s*"[^"]{4,}"'
+      - 'secret\s*=\s*"[^"]{4,}"'
+    confidence: medium
+
+  - id: java.secrets.hardcoded-connection
+    languages: [java]
+    severity: error
+    message: "Hardcoded database connection string"
+    cwe: CWE-798
+    patterns:
+      - 'DriverManager\.getConnection\s*\(\s*"jdbc:.*".*"[^"]*".*"[^"]*"'
+    confidence: high
+
+  # SSL/TLS
+  - id: java.network.trust-all-certs
+    languages: [java]
+    severity: error
+    message: "TrustManager accepts all certificates — MITM risk"
+    cwe: CWE-295
+    patterns:
+      - 'TrustAllCerts'
+      - 'X509TrustManager.*checkServerTrusted.*\{\s*\}'
+      - 'ALLOW_ALL_HOSTNAME_VERIFIER'
+      - 'setHostnameVerifier.*ALLOW_ALL'
+    confidence: high
+
+  - id: java.network.ssl-disabled
+    languages: [java]
+    severity: error
+    message: "SSL/TLS verification disabled"
+    cwe: CWE-295
+    patterns:
+      - 'SSLContext.*NONE'
+      - 'setSSLSocketFactory.*trust'
+    confidence: medium
+
+  # Path Traversal
+  - id: java.path.traversal
+    languages: [java]
+    severity: error
+    message: "File path from user input — path traversal risk"
+    cwe: CWE-22
+    patterns:
+      - 'new\s+File\s*\(\s*request\.getParameter'
+      - 'new\s+File\s*\(\s*.*\+\s*request\.'
+      - 'Paths\.get\s*\(\s*request\.'
+    confidence: high
+
+  # XXE
+  - id: java.xxe.xml-parser
+    languages: [java]
+    severity: error
+    message: "XML parser without disabling external entities — XXE"
+    cwe: CWE-611
+    owasp: "A05:2021"
+    patterns:
+      - 'DocumentBuilderFactory\.newInstance\(\)'
+      - 'SAXParserFactory\.newInstance\(\)'
+      - 'XMLInputFactory\.newInstance\(\)'
+    confidence: medium
+
+  # LDAP
+  - id: java.injection.ldap
+    languages: [java]
+    severity: warning
+    message: "LDAP query with user input — LDAP injection"
+    cwe: CWE-90
+    patterns:
+      - '\.search\s*\(\s*.*\+\s*\w+.*"'
+      - 'NamingEnumeration.*search.*\+'
+    confidence: medium
+
+  # Logging
+  - id: java.logging.sensitive
+    languages: [java]
+    severity: warning
+    message: "Sensitive data in log statement"
+    cwe: CWE-532
+    patterns:
+      - 'log(ger)?\..*password'
+      - 'log(ger)?\..*secret'
+      - 'log(ger)?\..*token'
+      - 'System\.out\.println.*password'
+    confidence: low
+
+  # CSRF
+  - id: java.web.csrf-disabled
+    languages: [java]
+    severity: warning
+    message: "CSRF protection disabled in Spring Security"
+    cwe: CWE-352
+    patterns:
+      - '\.csrf\(\)\.disable\(\)'
+      - 'csrf\.disable'
+    confidence: high
+
+  # Open Redirect
+  - id: java.web.open-redirect
+    languages: [java]
+    severity: warning
+    message: "Redirect with user-controlled URL — open redirect"
+    cwe: CWE-601
+    patterns:
+      - 'response\.sendRedirect\s*\(\s*request\.getParameter'
+      - 'response\.sendRedirect\s*\(\s*\w+\s*\)'
+    confidence: medium
+
+  # Expression Language Injection
+  - id: java.injection.el
+    languages: [java]
+    severity: error
+    message: "Expression Language injection"
+    cwe: CWE-917
+    patterns:
+      - 'ELProcessor.*eval\s*\('
+      - 'ExpressionFactory.*createValueExpression.*\+'
+    confidence: medium
+
+  # Spring
+  - id: java.spring.actuator-exposed
+    languages: [java]
+    severity: warning
+    message: "Spring Actuator endpoints may be exposed"
+    cwe: CWE-200
+    patterns:
+      - 'management\.endpoints\.web\.exposure\.include\s*=\s*\*'
+    confidence: high
+
+  - id: java.spring.debug-enabled
+    languages: [java]
+    severity: warning
+    message: "Spring debug mode enabled"
+    cwe: CWE-489
+    patterns:
+      - 'spring\.jpa\.show-sql\s*=\s*true'
+      - 'debug\s*=\s*true'
+      - 'logging\.level\.root\s*=\s*DEBUG'
+    confidence: low

@@ -1,0 +1,202 @@
+rules:
+  # SQL Injection
+  - id: php.injection.sql-concat
+    languages: [php]
+    severity: error
+    message: "SQL query with variable interpolation — SQL injection"
+    cwe: CWE-89
+    owasp: "A03:2021"
+    patterns:
+      - 'mysql_query\s*\(\s*".*\$'
+      - '->query\s*\(\s*".*\$'
+      - '->exec\s*\(\s*".*\$'
+      - 'mysqli_query\s*\(.*".*\$'
+    confidence: high
+
+  - id: php.injection.sql-deprecated
+    languages: [php]
+    severity: error
+    message: "Deprecated mysql_* function — use PDO with prepared statements"
+    cwe: CWE-89
+    patterns:
+      - 'mysql_query\s*\('
+      - 'mysql_connect\s*\('
+      - 'mysql_real_escape_string\s*\('
+    confidence: high
+
+  # Command Injection
+  - id: php.injection.command-exec
+    languages: [php]
+    severity: error
+    message: "Command execution with user input"
+    cwe: CWE-78
+    patterns:
+      - '\bexec\s*\(\s*\$'
+      - '\bsystem\s*\(\s*\$'
+      - '\bpassthru\s*\(\s*\$'
+      - '\bshell_exec\s*\(\s*\$'
+      - '\bpopen\s*\(\s*\$'
+      - '\bproc_open\s*\('
+      - 'backtick.*\$'
+    confidence: high
+
+  # Code Injection
+  - id: php.injection.eval
+    languages: [php]
+    severity: error
+    message: "eval() usage — code injection risk"
+    cwe: CWE-95
+    patterns:
+      - '\beval\s*\(\s*\$'
+      - '\beval\s*\('
+    confidence: high
+
+  - id: php.injection.preg-eval
+    languages: [php]
+    severity: error
+    message: "preg_replace with /e modifier — code execution"
+    cwe: CWE-95
+    patterns:
+      - 'preg_replace\s*\(\s*["\'].*\/e["\']'
+    confidence: high
+
+  - id: php.injection.assert
+    languages: [php]
+    severity: error
+    message: "assert() with string — code execution"
+    cwe: CWE-95
+    patterns:
+      - '\bassert\s*\(\s*\$'
+    confidence: high
+
+  # XSS
+  - id: php.xss.echo-unescaped
+    languages: [php]
+    severity: error
+    message: "Direct output of user input without escaping — XSS"
+    cwe: CWE-79
+    patterns:
+      - 'echo\s+\$_(?:GET|POST|REQUEST|COOKIE)\['
+      - 'print\s+\$_(?:GET|POST|REQUEST|COOKIE)\['
+      - '<\?=\s*\$_(?:GET|POST|REQUEST)'
+    confidence: high
+
+  # File Inclusion
+  - id: php.inclusion.lfi
+    languages: [php]
+    severity: error
+    message: "File inclusion with user input — LFI/RFI risk"
+    cwe: CWE-98
+    patterns:
+      - 'include\s*\(\s*\$'
+      - 'include_once\s*\(\s*\$'
+      - 'require\s*\(\s*\$'
+      - 'require_once\s*\(\s*\$'
+    confidence: high
+
+  # Deserialization
+  - id: php.deserialize.unserialize
+    languages: [php]
+    severity: error
+    message: "unserialize() on untrusted data — code execution"
+    cwe: CWE-502
+    patterns:
+      - 'unserialize\s*\(\s*\$'
+    confidence: high
+
+  # Cryptography
+  - id: php.crypto.weak-hash
+    languages: [php]
+    severity: warning
+    message: "Weak hash (MD5/SHA1) — use password_hash() for passwords"
+    cwe: CWE-328
+    patterns:
+      - '\bmd5\s*\('
+      - '\bsha1\s*\('
+    confidence: medium
+
+  - id: php.crypto.rand
+    languages: [php]
+    severity: warning
+    message: "rand()/mt_rand() for security — use random_int()"
+    cwe: CWE-330
+    patterns:
+      - '\brand\s*\('
+      - '\bmt_rand\s*\('
+    confidence: medium
+
+  # Credentials
+  - id: php.secrets.hardcoded
+    languages: [php]
+    severity: error
+    message: "Hardcoded credentials"
+    cwe: CWE-798
+    patterns:
+      - '\$password\s*=\s*["\'][^"\']{4,}["\']'
+      - '\$secret\s*=\s*["\'][^"\']{4,}["\']'
+      - '\$db_pass\s*=\s*["\'][^"\']{4,}["\']'
+    confidence: medium
+
+  # File Upload
+  - id: php.upload.unrestricted
+    languages: [php]
+    severity: error
+    message: "File upload without type validation"
+    cwe: CWE-434
+    patterns:
+      - 'move_uploaded_file\s*\(\s*\$_FILES'
+    confidence: medium
+
+  # Session
+  - id: php.session.fixation
+    languages: [php]
+    severity: warning
+    message: "Missing session_regenerate_id() after login"
+    cwe: CWE-384
+    patterns:
+      - 'session_start\s*\(\)'
+    confidence: low
+
+  # Configuration
+  - id: php.config.display-errors
+    languages: [php]
+    severity: warning
+    message: "display_errors enabled — information disclosure"
+    cwe: CWE-209
+    patterns:
+      - 'display_errors.*On'
+      - 'ini_set.*display_errors.*1'
+    confidence: high
+
+  - id: php.config.register-globals
+    languages: [php]
+    severity: error
+    message: "register_globals enabled — variable injection"
+    cwe: CWE-621
+    patterns:
+      - 'register_globals.*On'
+    confidence: high
+
+  # SSRF
+  - id: php.network.ssrf
+    languages: [php]
+    severity: warning
+    message: "HTTP request with user-controlled URL — SSRF"
+    cwe: CWE-918
+    patterns:
+      - 'file_get_contents\s*\(\s*\$'
+      - 'curl_setopt.*CURLOPT_URL.*\$'
+      - 'fopen\s*\(\s*\$.*http'
+    confidence: medium
+
+  # XXE
+  - id: php.xxe.libxml
+    languages: [php]
+    severity: error
+    message: "XML loading without disabling external entities"
+    cwe: CWE-611
+    patterns:
+      - 'simplexml_load_string\s*\('
+      - 'DOMDocument.*loadXML\s*\('
+      - 'LIBXML_NOENT'
+    confidence: medium

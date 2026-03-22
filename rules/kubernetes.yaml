@@ -1,0 +1,220 @@
+rules:
+  # Privileged Containers
+  - id: k8s.privilege.privileged
+    languages: [yaml, kubernetes]
+    severity: error
+    message: "Privileged container — full host access"
+    cwe: CWE-250
+    patterns:
+      - 'privileged\s*:\s*true'
+    confidence: high
+
+  - id: k8s.privilege.host-network
+    languages: [yaml, kubernetes]
+    severity: error
+    message: "hostNetwork: true — container uses host network"
+    cwe: CWE-250
+    patterns:
+      - 'hostNetwork\s*:\s*true'
+    confidence: high
+
+  - id: k8s.privilege.host-pid
+    languages: [yaml, kubernetes]
+    severity: error
+    message: "hostPID: true — container sees host processes"
+    cwe: CWE-250
+    patterns:
+      - 'hostPID\s*:\s*true'
+    confidence: high
+
+  - id: k8s.privilege.host-ipc
+    languages: [yaml, kubernetes]
+    severity: warning
+    message: "hostIPC: true — shared IPC namespace"
+    cwe: CWE-250
+    patterns:
+      - 'hostIPC\s*:\s*true'
+    confidence: high
+
+  # Security Context
+  - id: k8s.security.run-as-root
+    languages: [yaml, kubernetes]
+    severity: warning
+    message: "Container runs as root (runAsUser: 0)"
+    cwe: CWE-250
+    patterns:
+      - 'runAsUser\s*:\s*0'
+      - 'runAsNonRoot\s*:\s*false'
+    confidence: high
+
+  - id: k8s.security.no-readonly-rootfs
+    languages: [yaml, kubernetes]
+    severity: info
+    message: "readOnlyRootFilesystem not set"
+    cwe: CWE-693
+    patterns:
+      - 'readOnlyRootFilesystem\s*:\s*false'
+    confidence: medium
+
+  - id: k8s.security.allow-privilege-escalation
+    languages: [yaml, kubernetes]
+    severity: warning
+    message: "allowPrivilegeEscalation not disabled"
+    cwe: CWE-250
+    patterns:
+      - 'allowPrivilegeEscalation\s*:\s*true'
+    confidence: high
+
+  # Capabilities
+  - id: k8s.capabilities.dangerous
+    languages: [yaml, kubernetes]
+    severity: error
+    message: "Dangerous capability added (SYS_ADMIN, NET_RAW, ALL)"
+    cwe: CWE-250
+    patterns:
+      - 'SYS_ADMIN'
+      - 'NET_RAW'
+      - 'NET_ADMIN'
+      - '- ALL'
+    confidence: high
+
+  # Secrets
+  - id: k8s.secrets.env-plain
+    languages: [yaml, kubernetes]
+    severity: error
+    message: "Secret value in plain text env var"
+    cwe: CWE-798
+    patterns:
+      - 'name\s*:\s*.*(?:PASSWORD|SECRET|TOKEN|API_KEY)\s*\n\s*value\s*:'
+    confidence: medium
+
+  - id: k8s.secrets.configmap
+    languages: [yaml, kubernetes]
+    severity: warning
+    message: "Sensitive data in ConfigMap — use Secret resource"
+    cwe: CWE-798
+    patterns:
+      - 'kind\s*:\s*ConfigMap\s*\n.*(?:password|secret|token|api.key)'
+    confidence: medium
+
+  # Resource Limits
+  - id: k8s.resources.no-limits
+    languages: [yaml, kubernetes]
+    severity: warning
+    message: "Container without resource limits — DoS risk"
+    cwe: CWE-400
+    patterns:
+      - 'containers\s*:(?!.*limits)'
+    confidence: low
+
+  - id: k8s.resources.no-requests
+    languages: [yaml, kubernetes]
+    severity: info
+    message: "Container without resource requests"
+    cwe: CWE-400
+    patterns:
+      - 'containers\s*:(?!.*requests)'
+    confidence: low
+
+  # Image
+  - id: k8s.image.latest
+    languages: [yaml, kubernetes]
+    severity: warning
+    message: "Image using :latest tag — pin to specific version"
+    cwe: CWE-829
+    patterns:
+      - 'image\s*:\s*\S+:latest'
+      - 'image\s*:\s*\w+/\w+\s*$'
+    confidence: high
+
+  - id: k8s.image.pull-always
+    languages: [yaml, kubernetes]
+    severity: info
+    message: "imagePullPolicy not set to Always for mutable tags"
+    cwe: CWE-829
+    patterns:
+      - 'imagePullPolicy\s*:\s*Never'
+    confidence: low
+
+  # Network Policy
+  - id: k8s.network.no-policy
+    languages: [yaml, kubernetes]
+    severity: info
+    message: "No NetworkPolicy — all pod-to-pod traffic allowed"
+    cwe: CWE-284
+    patterns:
+      - 'kind\s*:\s*Deployment(?!.*NetworkPolicy)'
+    confidence: low
+
+  # RBAC
+  - id: k8s.rbac.cluster-admin
+    languages: [yaml, kubernetes]
+    severity: error
+    message: "ClusterRoleBinding to cluster-admin"
+    cwe: CWE-250
+    patterns:
+      - 'name\s*:\s*cluster-admin'
+    confidence: high
+
+  - id: k8s.rbac.wildcard-verbs
+    languages: [yaml, kubernetes]
+    severity: warning
+    message: "RBAC role with wildcard verbs"
+    cwe: CWE-250
+    patterns:
+      - 'verbs\s*:\s*\[\s*"\*"\s*\]'
+      - "verbs\\s*:\\s*\\[\\s*'\\*'\\s*\\]"
+    confidence: high
+
+  - id: k8s.rbac.wildcard-resources
+    languages: [yaml, kubernetes]
+    severity: warning
+    message: "RBAC role with wildcard resources"
+    cwe: CWE-250
+    patterns:
+      - 'resources\s*:\s*\[\s*"\*"\s*\]'
+    confidence: high
+
+  # Host Path
+  - id: k8s.volume.hostpath
+    languages: [yaml, kubernetes]
+    severity: warning
+    message: "hostPath volume mount — access to host filesystem"
+    cwe: CWE-250
+    patterns:
+      - 'hostPath\s*:'
+    confidence: high
+
+  - id: k8s.volume.hostpath-sensitive
+    languages: [yaml, kubernetes]
+    severity: error
+    message: "hostPath mounting sensitive host directory"
+    cwe: CWE-250
+    patterns:
+      - 'path\s*:\s*/etc\b'
+      - 'path\s*:\s*/var/run/docker\.sock'
+      - 'path\s*:\s*/proc\b'
+      - 'path\s*:\s*/sys\b'
+    confidence: high
+
+  # Service Account
+  - id: k8s.sa.automount-token
+    languages: [yaml, kubernetes]
+    severity: info
+    message: "automountServiceAccountToken not disabled"
+    cwe: CWE-284
+    patterns:
+      - 'automountServiceAccountToken\s*:\s*true'
+    confidence: medium
+
+  # Tiller (Helm v2)
+  - id: k8s.helm.tiller
+    languages: [yaml, kubernetes]
+    severity: error
+    message: "Tiller (Helm v2) detected — upgrade to Helm v3"
+    cwe: CWE-250
+    patterns:
+      - 'name\s*:\s*tiller'
+      - 'app\s*:\s*helm'
+      - 'tiller-deploy'
+    confidence: high

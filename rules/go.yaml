@@ -1,0 +1,180 @@
+rules:
+  # SQL Injection
+  - id: go.injection.sql-concat
+    languages: [go]
+    severity: error
+    message: "SQL query with string concatenation — SQL injection"
+    cwe: CWE-89
+    owasp: "A03:2021"
+    patterns:
+      - 'db\.\w+\s*\(\s*".*"\s*\+\s*\w+'
+      - '\.Query\s*\(\s*".*"\s*\+\s*\w+'
+      - '\.Exec\s*\(\s*".*"\s*\+\s*\w+'
+      - 'fmt\.Sprintf\s*\(\s*".*(?:SELECT|INSERT|UPDATE|DELETE).*%[sv]'
+    confidence: high
+
+  - id: go.injection.sql-fmt
+    languages: [go]
+    severity: error
+    message: "SQL built with fmt.Sprintf — SQL injection"
+    cwe: CWE-89
+    patterns:
+      - 'fmt\.Sprintf\s*\(\s*".*(?:WHERE|SET|VALUES).*%[sv]'
+    confidence: high
+
+  # Command Injection
+  - id: go.injection.command-exec
+    languages: [go]
+    severity: error
+    message: "os/exec with variable input — command injection"
+    cwe: CWE-78
+    patterns:
+      - 'exec\.Command\s*\(\s*\w+[^)]'
+      - 'exec\.CommandContext\s*\(.*\w+[^)]'
+    confidence: medium
+
+  - id: go.injection.command-shell
+    languages: [go]
+    severity: error
+    message: "Shell execution via bash -c — command injection"
+    cwe: CWE-78
+    patterns:
+      - 'exec\.Command\s*\(\s*"(?:bash|sh|/bin/sh|/bin/bash)"\s*,\s*"-c"'
+    confidence: high
+
+  # Cryptography
+  - id: go.crypto.weak-hash
+    languages: [go]
+    severity: warning
+    message: "Weak hash (MD5/SHA1) — use SHA-256+"
+    cwe: CWE-328
+    patterns:
+      - 'crypto/md5'
+      - 'md5\.New\(\)'
+      - 'md5\.Sum\('
+      - 'crypto/sha1'
+      - 'sha1\.New\(\)'
+    confidence: high
+
+  - id: go.crypto.weak-random
+    languages: [go]
+    severity: warning
+    message: "math/rand for security — use crypto/rand"
+    cwe: CWE-330
+    patterns:
+      - 'math/rand'
+      - 'rand\.Intn\('
+      - 'rand\.Int\(\)'
+    confidence: medium
+
+  - id: go.crypto.weak-tls
+    languages: [go]
+    severity: error
+    message: "TLS MinVersion below 1.2 — weak protocol"
+    cwe: CWE-327
+    patterns:
+      - 'MinVersion.*tls\.VersionTLS10'
+      - 'MinVersion.*tls\.VersionTLS11'
+      - 'MinVersion.*tls\.VersionSSL'
+    confidence: high
+
+  # SSL/TLS
+  - id: go.network.tls-skip-verify
+    languages: [go]
+    severity: error
+    message: "TLS InsecureSkipVerify=true — MITM risk"
+    cwe: CWE-295
+    patterns:
+      - 'InsecureSkipVerify\s*:\s*true'
+    confidence: high
+
+  # Credentials
+  - id: go.secrets.hardcoded
+    languages: [go]
+    severity: error
+    message: "Hardcoded credential in Go source"
+    cwe: CWE-798
+    patterns:
+      - 'password\s*[:=]\s*"[^"]{4,}"'
+      - 'secret\s*[:=]\s*"[^"]{4,}"'
+      - 'apiKey\s*[:=]\s*"[^"]{4,}"'
+      - 'token\s*[:=]\s*"[^"]{4,}"'
+    confidence: medium
+
+  # Path Traversal
+  - id: go.path.traversal
+    languages: [go]
+    severity: error
+    message: "File path from user input — path traversal"
+    cwe: CWE-22
+    patterns:
+      - 'http\.ServeFile\s*\(.*r\.\w+'
+      - 'os\.Open\s*\(\s*.*r\.\w+'
+      - 'ioutil\.ReadFile\s*\(\s*.*\+'
+      - 'filepath\.Join\s*\(.*r\.\w+'
+    confidence: high
+
+  # Race Condition
+  - id: go.race.file-check-use
+    languages: [go]
+    severity: warning
+    message: "TOCTOU race condition — file check then use"
+    cwe: CWE-367
+    patterns:
+      - 'os\.Stat\s*\(.*\)\s*\n.*os\.Open'
+      - 'os\.Stat\s*\(.*\)\s*\n.*ioutil'
+    confidence: low
+
+  # Error Handling
+  - id: go.error.ignored
+    languages: [go]
+    severity: info
+    message: "Error return value ignored"
+    cwe: CWE-391
+    patterns:
+      - '\w+,\s*_\s*:?=\s*\w+\.\w+\s*\('
+    confidence: low
+
+  # SSRF
+  - id: go.network.ssrf
+    languages: [go]
+    severity: warning
+    message: "HTTP request with user-controlled URL — SSRF risk"
+    cwe: CWE-918
+    patterns:
+      - 'http\.Get\s*\(\s*\w+'
+      - 'http\.NewRequest\s*\(\s*.*\w+\s*\)'
+    confidence: medium
+
+  # Template
+  - id: go.template.unescaped
+    languages: [go]
+    severity: warning
+    message: "html/template with unescaped output"
+    cwe: CWE-79
+    patterns:
+      - 'template\.HTML\s*\('
+      - 'template\.JS\s*\('
+      - 'template\.URL\s*\('
+    confidence: medium
+
+  # Gin Framework
+  - id: go.gin.debug-mode
+    languages: [go]
+    severity: info
+    message: "Gin running in debug mode"
+    cwe: CWE-489
+    patterns:
+      - 'gin\.SetMode\s*\(\s*gin\.DebugMode'
+    confidence: high
+
+  # CORS
+  - id: go.network.cors-wildcard
+    languages: [go]
+    severity: warning
+    message: "CORS allows all origins"
+    cwe: CWE-942
+    patterns:
+      - 'AllowAllOrigins\s*:\s*true'
+      - 'Access-Control-Allow-Origin.*\*'
+    confidence: medium

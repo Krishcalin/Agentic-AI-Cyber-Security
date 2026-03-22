@@ -1,0 +1,161 @@
+rules:
+  # SQL Injection
+  - id: ruby.injection.sql-interpolation
+    languages: [ruby]
+    severity: error
+    message: "SQL with string interpolation — SQL injection"
+    cwe: CWE-89
+    patterns:
+      - '\.where\s*\(\s*".*#\{'
+      - '\.find_by_sql\s*\(\s*".*#\{'
+      - '\.execute\s*\(\s*".*#\{'
+    confidence: high
+
+  # Command Injection
+  - id: ruby.injection.command-backtick
+    languages: [ruby]
+    severity: error
+    message: "Backtick command execution — injection risk"
+    cwe: CWE-78
+    patterns:
+      - '`.*#\{'
+      - 'system\s*\(\s*".*#\{'
+      - 'system\s*\(\s*\w+'
+      - 'exec\s*\(\s*".*#\{'
+      - '%x\[.*#\{'
+    confidence: high
+
+  - id: ruby.injection.open-pipe
+    languages: [ruby]
+    severity: error
+    message: "Open with pipe — command injection"
+    cwe: CWE-78
+    patterns:
+      - 'open\s*\(\s*"\|.*#\{'
+      - 'IO\.popen\s*\('
+    confidence: high
+
+  # Code Injection
+  - id: ruby.injection.eval
+    languages: [ruby]
+    severity: error
+    message: "eval() usage — code injection"
+    cwe: CWE-95
+    patterns:
+      - '\beval\s*\('
+      - '\binstance_eval\s*\('
+      - '\bclass_eval\s*\('
+      - '\bmodule_eval\s*\('
+    confidence: high
+
+  - id: ruby.injection.send
+    languages: [ruby]
+    severity: warning
+    message: "Dynamic method call via send — code injection risk"
+    cwe: CWE-95
+    patterns:
+      - '\.send\s*\(\s*params'
+      - '\.public_send\s*\(\s*params'
+    confidence: medium
+
+  # XSS
+  - id: ruby.xss.raw-output
+    languages: [ruby]
+    severity: warning
+    message: "raw/html_safe output — XSS if user input"
+    cwe: CWE-79
+    patterns:
+      - '\.html_safe'
+      - '\braw\s*\('
+      - '<%==\s*'
+    confidence: medium
+
+  # Deserialization
+  - id: ruby.deserialize.marshal
+    languages: [ruby]
+    severity: error
+    message: "Marshal.load on untrusted data — code execution"
+    cwe: CWE-502
+    patterns:
+      - 'Marshal\.load\s*\('
+      - 'Marshal\.restore\s*\('
+    confidence: high
+
+  - id: ruby.deserialize.yaml
+    languages: [ruby]
+    severity: error
+    message: "YAML.load on untrusted data — code execution"
+    cwe: CWE-502
+    patterns:
+      - 'YAML\.load\s*\(\s*[^)]*(?!safe)[^)]*\)'
+      - 'YAML\.load\s*\(\s*\w+'
+    confidence: high
+
+  # Cryptography
+  - id: ruby.crypto.weak-hash
+    languages: [ruby]
+    severity: warning
+    message: "Weak hash (MD5/SHA1)"
+    cwe: CWE-328
+    patterns:
+      - 'Digest::MD5'
+      - 'Digest::SHA1'
+      - 'OpenSSL::Digest::MD5'
+    confidence: high
+
+  # Credentials
+  - id: ruby.secrets.hardcoded
+    languages: [ruby]
+    severity: error
+    message: "Hardcoded credentials"
+    cwe: CWE-798
+    patterns:
+      - 'password\s*=\s*["\'][^"\']{4,}["\']'
+      - 'secret_key\s*=\s*["\'][^"\']{4,}["\']'
+      - 'api_key\s*=\s*["\'][^"\']{4,}["\']'
+    confidence: medium
+
+  # SSL
+  - id: ruby.network.ssl-disabled
+    languages: [ruby]
+    severity: error
+    message: "SSL verification disabled"
+    cwe: CWE-295
+    patterns:
+      - 'verify_mode\s*=\s*OpenSSL::SSL::VERIFY_NONE'
+      - 'ssl_verify_mode.*VERIFY_NONE'
+    confidence: high
+
+  # Rails
+  - id: ruby.rails.mass-assignment
+    languages: [ruby]
+    severity: warning
+    message: "Potential mass assignment — use strong parameters"
+    cwe: CWE-915
+    patterns:
+      - '\.create\s*\(\s*params\['
+      - '\.update\s*\(\s*params\['
+      - '\.new\s*\(\s*params\['
+    confidence: medium
+
+  - id: ruby.rails.render-inline
+    languages: [ruby]
+    severity: warning
+    message: "Render inline with user input — XSS/SSTI"
+    cwe: CWE-79
+    patterns:
+      - 'render\s+inline\s*:'
+      - 'render\s+text\s*:\s*params'
+    confidence: medium
+
+  # File
+  - id: ruby.path.traversal
+    languages: [ruby]
+    severity: error
+    message: "File access with user input — path traversal"
+    cwe: CWE-22
+    patterns:
+      - 'File\.read\s*\(\s*params'
+      - 'File\.open\s*\(\s*params'
+      - 'send_file\s*\(\s*params'
+    confidence: high

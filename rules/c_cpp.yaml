@@ -1,0 +1,179 @@
+rules:
+  # Buffer Overflow
+  - id: c.memory.gets
+    languages: [c, cpp]
+    severity: error
+    message: "gets() — buffer overflow, removed in C11"
+    cwe: CWE-120
+    patterns:
+      - '\bgets\s*\('
+    confidence: high
+
+  - id: c.memory.strcpy
+    languages: [c, cpp]
+    severity: warning
+    message: "strcpy() without bounds check — buffer overflow"
+    cwe: CWE-120
+    patterns:
+      - '\bstrcpy\s*\('
+      - '\bstrcat\s*\('
+      - '\bwcscpy\s*\('
+    confidence: high
+
+  - id: c.memory.sprintf
+    languages: [c, cpp]
+    severity: warning
+    message: "sprintf() without bounds — use snprintf()"
+    cwe: CWE-120
+    patterns:
+      - '\bsprintf\s*\('
+      - '\bvsprintf\s*\('
+    confidence: high
+
+  - id: c.memory.scanf-no-width
+    languages: [c, cpp]
+    severity: warning
+    message: "scanf %s without width limit — buffer overflow"
+    cwe: CWE-120
+    patterns:
+      - 'scanf\s*\(\s*".*%[^0-9]*s"'
+    confidence: medium
+
+  # Format String
+  - id: c.format.printf-user
+    languages: [c, cpp]
+    severity: error
+    message: "printf/fprintf with user-controlled format — format string attack"
+    cwe: CWE-134
+    patterns:
+      - 'printf\s*\(\s*\w+\s*\)'
+      - 'fprintf\s*\(\s*\w+\s*,\s*\w+\s*\)'
+      - 'syslog\s*\(\s*\w+\s*,\s*\w+\s*\)'
+    confidence: medium
+
+  # Command Injection
+  - id: c.injection.system
+    languages: [c, cpp]
+    severity: error
+    message: "system() call — command injection risk"
+    cwe: CWE-78
+    patterns:
+      - '\bsystem\s*\(\s*\w+'
+      - '\bpopen\s*\(\s*\w+'
+      - '\bexecvp?\s*\('
+    confidence: medium
+
+  # Integer Overflow
+  - id: c.integer.overflow
+    languages: [c, cpp]
+    severity: warning
+    message: "Integer overflow risk in arithmetic"
+    cwe: CWE-190
+    patterns:
+      - '\batoi\s*\('
+      - '\batol\s*\('
+    confidence: low
+
+  # Race Condition
+  - id: c.race.toctou
+    languages: [c, cpp]
+    severity: warning
+    message: "access() then open() — TOCTOU race condition"
+    cwe: CWE-367
+    patterns:
+      - 'access\s*\(.*\)\s*.*open\s*\('
+    confidence: low
+
+  # Memory
+  - id: c.memory.malloc-no-check
+    languages: [c, cpp]
+    severity: warning
+    message: "malloc() without NULL check"
+    cwe: CWE-252
+    patterns:
+      - '=\s*malloc\s*\([^;]+;(?!\s*if)'
+    confidence: low
+
+  - id: c.memory.free-double
+    languages: [c, cpp]
+    severity: warning
+    message: "Potential use-after-free or double-free pattern"
+    cwe: CWE-416
+    patterns:
+      - 'free\s*\(\s*\w+\s*\)\s*;[^}]*free\s*\(\s*\w+\s*\)'
+    confidence: low
+
+  # Cryptography
+  - id: c.crypto.rand
+    languages: [c, cpp]
+    severity: warning
+    message: "rand()/srand() for security — use /dev/urandom or arc4random"
+    cwe: CWE-330
+    patterns:
+      - '\brand\s*\(\s*\)'
+      - '\bsrand\s*\('
+    confidence: medium
+
+  - id: c.crypto.weak-openssl
+    languages: [c, cpp]
+    severity: warning
+    message: "Weak OpenSSL cipher or protocol"
+    cwe: CWE-327
+    patterns:
+      - 'SSLv2_method'
+      - 'SSLv3_method'
+      - 'SSLv23_method'
+      - 'TLSv1_method'
+    confidence: high
+
+  # Credentials
+  - id: c.secrets.hardcoded
+    languages: [c, cpp]
+    severity: error
+    message: "Hardcoded credentials in C/C++ source"
+    cwe: CWE-798
+    patterns:
+      - 'password\s*=\s*"[^"]{4,}"'
+      - 'passwd\s*=\s*"[^"]{4,}"'
+      - 'secret\s*=\s*"[^"]{4,}"'
+    confidence: medium
+
+  # Dangerous Functions
+  - id: c.dangerous.realpath
+    languages: [c, cpp]
+    severity: warning
+    message: "realpath() with NULL buffer — buffer overflow on some systems"
+    cwe: CWE-120
+    patterns:
+      - 'realpath\s*\(\s*\w+\s*,\s*NULL'
+    confidence: low
+
+  - id: c.dangerous.tmpnam
+    languages: [c, cpp]
+    severity: warning
+    message: "tmpnam() — race condition, use mkstemp()"
+    cwe: CWE-377
+    patterns:
+      - '\btmpnam\s*\('
+      - '\btempnam\s*\('
+      - '\bmktemp\s*\('
+    confidence: high
+
+  # C++ Specific
+  - id: cpp.memory.raw-new
+    languages: [cpp]
+    severity: info
+    message: "Raw new/delete — prefer smart pointers"
+    cwe: CWE-401
+    patterns:
+      - '\bnew\s+\w+\s*[\(\[]'
+    confidence: low
+
+  - id: cpp.stl.unchecked-index
+    languages: [cpp]
+    severity: info
+    message: "operator[] without bounds check — use .at() for safety"
+    cwe: CWE-125
+    patterns:
+      - '\.\w+\[\s*\w+\s*\]'
+    confidence: low

@@ -1,0 +1,165 @@
+rules:
+  # Running as root
+  - id: dockerfile.user.root
+    languages: [dockerfile]
+    severity: warning
+    message: "Container runs as root — use USER directive"
+    cwe: CWE-250
+    patterns:
+      - '^(?!.*USER\s).*(?:CMD|ENTRYPOINT)'
+    confidence: low
+
+  - id: dockerfile.user.add-root
+    languages: [dockerfile]
+    severity: warning
+    message: "USER root explicitly set — run as non-root"
+    cwe: CWE-250
+    patterns:
+      - 'USER\s+root'
+    confidence: high
+
+  # Base Image
+  - id: dockerfile.image.latest
+    languages: [dockerfile]
+    severity: warning
+    message: "Using :latest tag — pin to specific version"
+    cwe: CWE-829
+    patterns:
+      - 'FROM\s+\w+:latest'
+      - 'FROM\s+\w+\s*$'
+    confidence: high
+
+  - id: dockerfile.image.untrusted
+    languages: [dockerfile]
+    severity: info
+    message: "Base image from untrusted registry"
+    cwe: CWE-829
+    patterns:
+      - 'FROM\s+(?!docker\.io|gcr\.io|registry\.redhat\.io|mcr\.microsoft\.com|public\.ecr\.aws)'
+    confidence: low
+
+  # Secrets in build
+  - id: dockerfile.secrets.env
+    languages: [dockerfile]
+    severity: error
+    message: "Secret passed via ENV — visible in image layers"
+    cwe: CWE-798
+    patterns:
+      - 'ENV\s+.*(?:PASSWORD|SECRET|TOKEN|API_KEY|PRIVATE_KEY)\s*='
+    confidence: high
+
+  - id: dockerfile.secrets.arg
+    languages: [dockerfile]
+    severity: warning
+    message: "Secret passed via ARG — visible in build history"
+    cwe: CWE-798
+    patterns:
+      - 'ARG\s+.*(?:PASSWORD|SECRET|TOKEN|API_KEY|PRIVATE_KEY)'
+    confidence: high
+
+  - id: dockerfile.secrets.copy
+    languages: [dockerfile]
+    severity: error
+    message: "Copying secret files into image"
+    cwe: CWE-798
+    patterns:
+      - 'COPY\s+.*\.env\s'
+      - 'COPY\s+.*\.pem\s'
+      - 'COPY\s+.*id_rsa'
+      - 'COPY\s+.*\.key\s'
+      - 'ADD\s+.*\.env\s'
+    confidence: high
+
+  # Network
+  - id: dockerfile.network.expose-all
+    languages: [dockerfile]
+    severity: info
+    message: "Exposing port — verify it's intentional"
+    cwe: CWE-200
+    patterns:
+      - 'EXPOSE\s+\d+'
+    confidence: low
+
+  # Install
+  - id: dockerfile.install.curl-pipe
+    languages: [dockerfile]
+    severity: error
+    message: "curl|bash anti-pattern — unverified remote code execution"
+    cwe: CWE-829
+    patterns:
+      - 'curl\s+.*\|\s*(?:bash|sh)'
+      - 'wget\s+.*\|\s*(?:bash|sh)'
+    confidence: high
+
+  - id: dockerfile.install.no-verify
+    languages: [dockerfile]
+    severity: warning
+    message: "Package install without GPG verification"
+    cwe: CWE-345
+    patterns:
+      - 'apt-get\s+install.*--allow-unauthenticated'
+      - 'apk\s+add.*--no-cache.*--allow-untrusted'
+      - 'yum\s+install.*--nogpgcheck'
+    confidence: high
+
+  - id: dockerfile.install.no-pin
+    languages: [dockerfile]
+    severity: info
+    message: "Package install without version pinning"
+    cwe: CWE-829
+    patterns:
+      - 'pip\s+install\s+(?!.*==)\w+'
+      - 'npm\s+install\s+(?!.*@)\w+'
+    confidence: low
+
+  # ADD vs COPY
+  - id: dockerfile.add.remote
+    languages: [dockerfile]
+    severity: warning
+    message: "ADD with URL — use COPY + curl for verification"
+    cwe: CWE-829
+    patterns:
+      - 'ADD\s+https?://'
+    confidence: high
+
+  # Healthcheck
+  - id: dockerfile.health.missing
+    languages: [dockerfile]
+    severity: info
+    message: "No HEALTHCHECK instruction"
+    cwe: CWE-693
+    patterns:
+      - '^(?!.*HEALTHCHECK).*(?:CMD|ENTRYPOINT)'
+    confidence: low
+
+  # Shell
+  - id: dockerfile.shell.sudo
+    languages: [dockerfile]
+    severity: warning
+    message: "sudo in Dockerfile — already running as root"
+    cwe: CWE-250
+    patterns:
+      - 'RUN\s+sudo\s'
+    confidence: high
+
+  # Cleanup
+  - id: dockerfile.cleanup.apt-cache
+    languages: [dockerfile]
+    severity: info
+    message: "apt-get without cleanup — bloated image"
+    cwe: CWE-400
+    patterns:
+      - 'apt-get\s+install(?!.*&&\s*.*rm\s+-rf\s+/var/lib/apt)'
+    confidence: low
+
+  # Privileged
+  - id: dockerfile.privilege.setuid
+    languages: [dockerfile]
+    severity: warning
+    message: "Setting SUID/SGID in Dockerfile"
+    cwe: CWE-250
+    patterns:
+      - 'chmod\s+[24][0-7][0-7][0-7]'
+      - 'chmod\s+u\+s'
+      - 'chmod\s+g\+s'
+    confidence: medium

@@ -1,0 +1,164 @@
+rules:
+  # Public Access
+  - id: terraform.access.public-s3
+    languages: [terraform]
+    severity: error
+    message: "S3 bucket with public access"
+    cwe: CWE-284
+    patterns:
+      - 'acl\s*=\s*"public-read'
+      - 'acl\s*=\s*"public-read-write'
+      - 'block_public_acls\s*=\s*false'
+      - 'block_public_policy\s*=\s*false'
+      - 'restrict_public_buckets\s*=\s*false'
+    confidence: high
+
+  - id: terraform.access.public-sg
+    languages: [terraform]
+    severity: error
+    message: "Security group open to 0.0.0.0/0"
+    cwe: CWE-284
+    patterns:
+      - 'cidr_blocks\s*=\s*\[\s*"0\.0\.0\.0/0"\s*\]'
+      - 'ipv6_cidr_blocks\s*=\s*\[\s*"::/0"\s*\]'
+    confidence: high
+
+  - id: terraform.access.public-rds
+    languages: [terraform]
+    severity: error
+    message: "RDS instance publicly accessible"
+    cwe: CWE-284
+    patterns:
+      - 'publicly_accessible\s*=\s*true'
+    confidence: high
+
+  # Encryption
+  - id: terraform.crypto.s3-no-encryption
+    languages: [terraform]
+    severity: warning
+    message: "S3 bucket without encryption"
+    cwe: CWE-311
+    patterns:
+      - 'aws_s3_bucket"(?!.*server_side_encryption)'
+    confidence: low
+
+  - id: terraform.crypto.ebs-no-encryption
+    languages: [terraform]
+    severity: warning
+    message: "EBS volume without encryption"
+    cwe: CWE-311
+    patterns:
+      - 'encrypted\s*=\s*false'
+    confidence: high
+
+  - id: terraform.crypto.rds-no-encryption
+    languages: [terraform]
+    severity: warning
+    message: "RDS instance without encryption"
+    cwe: CWE-311
+    patterns:
+      - 'storage_encrypted\s*=\s*false'
+    confidence: high
+
+  # Logging
+  - id: terraform.logging.cloudtrail-disabled
+    languages: [terraform]
+    severity: warning
+    message: "CloudTrail logging disabled"
+    cwe: CWE-778
+    patterns:
+      - 'enable_logging\s*=\s*false'
+      - 'is_multi_region_trail\s*=\s*false'
+    confidence: high
+
+  - id: terraform.logging.s3-no-logging
+    languages: [terraform]
+    severity: info
+    message: "S3 bucket without access logging"
+    cwe: CWE-778
+    patterns:
+      - 'aws_s3_bucket"(?!.*logging)'
+    confidence: low
+
+  # Credentials
+  - id: terraform.secrets.hardcoded
+    languages: [terraform]
+    severity: error
+    message: "Hardcoded credentials in Terraform"
+    cwe: CWE-798
+    patterns:
+      - 'access_key\s*=\s*"[A-Z0-9]{16,}"'
+      - 'secret_key\s*=\s*"[^"]{16,}"'
+      - 'password\s*=\s*"[^"]{4,}"'
+    confidence: high
+
+  # Network
+  - id: terraform.network.ssh-open
+    languages: [terraform]
+    severity: error
+    message: "SSH (port 22) open to 0.0.0.0/0"
+    cwe: CWE-284
+    patterns:
+      - 'from_port\s*=\s*22.*cidr_blocks.*0\.0\.0\.0/0'
+      - 'port\s*=\s*22.*cidr_blocks.*0\.0\.0\.0'
+    confidence: medium
+
+  - id: terraform.network.rdp-open
+    languages: [terraform]
+    severity: error
+    message: "RDP (port 3389) open to 0.0.0.0/0"
+    cwe: CWE-284
+    patterns:
+      - 'from_port\s*=\s*3389.*cidr_blocks.*0\.0\.0\.0/0'
+    confidence: medium
+
+  - id: terraform.network.all-ports
+    languages: [terraform]
+    severity: error
+    message: "Security group allows all ports"
+    cwe: CWE-284
+    patterns:
+      - 'from_port\s*=\s*0\s*\n\s*to_port\s*=\s*65535'
+      - 'from_port\s*=\s*0\s*\n\s*to_port\s*=\s*0'
+    confidence: high
+
+  # IAM
+  - id: terraform.iam.wildcard-action
+    languages: [terraform]
+    severity: error
+    message: "IAM policy with wildcard action (*)"
+    cwe: CWE-250
+    patterns:
+      - '"Action"\s*:\s*"\*"'
+      - 'actions\s*=\s*\[\s*"\*"\s*\]'
+    confidence: high
+
+  - id: terraform.iam.wildcard-resource
+    languages: [terraform]
+    severity: warning
+    message: "IAM policy with wildcard resource (*)"
+    cwe: CWE-250
+    patterns:
+      - '"Resource"\s*:\s*"\*"'
+      - 'resources\s*=\s*\[\s*"\*"\s*\]'
+    confidence: high
+
+  # Misc
+  - id: terraform.misc.no-versioning
+    languages: [terraform]
+    severity: info
+    message: "S3 bucket without versioning"
+    cwe: CWE-693
+    patterns:
+      - 'versioning\s*\{[^}]*enabled\s*=\s*false'
+    confidence: medium
+
+  - id: terraform.misc.default-vpc
+    languages: [terraform]
+    severity: info
+    message: "Using default VPC"
+    cwe: CWE-284
+    patterns:
+      - 'aws_default_vpc'
+      - 'aws_default_subnet'
+    confidence: medium
