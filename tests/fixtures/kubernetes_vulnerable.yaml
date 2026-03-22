@@ -1,0 +1,64 @@
+# Deliberately vulnerable Kubernetes manifest for testing
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vulnerable-app
+spec:
+  template:
+    spec:
+      hostNetwork: true
+      hostPID: true
+      hostIPC: true
+      containers:
+        - name: app
+          image: myapp:latest
+          imagePullPolicy: Never
+          securityContext:
+            privileged: true
+            runAsUser: 0
+            runAsNonRoot: false
+            allowPrivilegeEscalation: true
+            readOnlyRootFilesystem: false
+            capabilities:
+              add:
+                - SYS_ADMIN
+                - NET_RAW
+                - NET_ADMIN
+          env:
+            - name: DB_PASSWORD
+              value: "secret123"
+            - name: API_TOKEN
+              value: "sk-1234567890"
+          volumeMounts:
+            - name: host-root
+              mountPath: /host
+            - name: docker-sock
+              mountPath: /var/run/docker.sock
+      automountServiceAccountToken: true
+      volumes:
+        - name: host-root
+          hostPath:
+            path: /
+        - name: docker-sock
+          hostPath:
+            path: /var/run/docker.sock
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: admin-binding
+roleRef:
+  kind: ClusterRole
+  name: cluster-admin
+subjects:
+  - kind: ServiceAccount
+    name: default
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: wide-open
+rules:
+  - apiGroups: ["*"]
+    resources: ["*"]
+    verbs: ["*"]

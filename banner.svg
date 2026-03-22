@@ -132,7 +132,7 @@
   <g transform="translate(160, 180)">
     <!-- Card 1: Rules -->
     <rect x="0" y="0" width="128" height="68" rx="8" fill="url(#cardBg)" stroke="#374151" stroke-width="0.8"/>
-    <text x="64" y="28" font-family="'SF Mono','Fira Code',monospace" font-size="26" fill="#8b5cf6" font-weight="700" text-anchor="middle" filter="url(#glow)">85</text>
+    <text x="64" y="28" font-family="'SF Mono','Fira Code',monospace" font-size="24" fill="#8b5cf6" font-weight="700" text-anchor="middle" filter="url(#glow)">237</text>
     <text x="64" y="48" font-family="'Inter','Segoe UI',sans-serif" font-size="9" fill="#6b7280" text-anchor="middle" letter-spacing="1.5" font-weight="500">SECURITY RULES</text>
 
     <!-- Card 2: Languages -->
@@ -142,7 +142,7 @@
 
     <!-- Card 3: MCP Tools -->
     <rect x="280" y="0" width="128" height="68" rx="8" fill="url(#cardBg)" stroke="#374151" stroke-width="0.8"/>
-    <text x="344" y="28" font-family="'SF Mono','Fira Code',monospace" font-size="26" fill="#10b981" font-weight="700" text-anchor="middle">11</text>
+    <text x="344" y="28" font-family="'SF Mono','Fira Code',monospace" font-size="26" fill="#10b981" font-weight="700" text-anchor="middle">12</text>
     <text x="344" y="48" font-family="'Inter','Segoe UI',sans-serif" font-size="9" fill="#6b7280" text-anchor="middle" letter-spacing="1.5" font-weight="500">MCP TOOLS</text>
 
     <!-- Card 4: Engines -->

@@ -1,0 +1,26 @@
+# Deliberately vulnerable Dockerfile for testing
+FROM ubuntu:latest
+
+USER root
+
+ENV DB_PASSWORD=secret123
+ENV API_TOKEN=sk-1234567890abcdef
+
+ARG PRIVATE_KEY
+
+RUN apt-get install --allow-unauthenticated nginx
+RUN curl https://example.com/install.sh | bash
+RUN pip install flask requests
+
+ADD https://example.com/binary /usr/local/bin/app
+
+COPY .env /app/.env
+COPY id_rsa /root/.ssh/
+
+RUN sudo chmod 777 /app/data
+RUN chmod 4755 /usr/local/bin/suid-binary
+
+EXPOSE 8080
+EXPOSE 3306
+
+CMD ["python", "app.py"]
