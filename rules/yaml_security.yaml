@@ -1,0 +1,181 @@
+rules:
+  - id: yaml.secrets.yml001
+    patterns:
+      - "password\\s*:\\s*['\"]?[^\\s'\"#]{8,}"
+    message: "Hardcoded password in YAML configuration"
+    severity: ERROR
+    cwe: "CWE-798"
+    owasp: "A02:2021"
+    category: secrets
+    languages: [yaml]
+
+  - id: yaml.secrets.yml002
+    patterns:
+      - "(api_key|apikey|api-key)\\s*:\\s*['\"]?[A-Za-z0-9_-]{16,}"
+    message: "API key in YAML configuration"
+    severity: ERROR
+    cwe: "CWE-798"
+    category: secrets
+    languages: [yaml]
+
+  - id: yaml.secrets.yml003
+    patterns:
+      - "(secret|token|auth)\\s*:\\s*['\"]?[A-Za-z0-9_/+=-]{16,}"
+    message: "Secret/token in YAML configuration"
+    severity: ERROR
+    cwe: "CWE-798"
+    category: secrets
+    languages: [yaml]
+
+  - id: yaml.secrets.yml004
+    patterns:
+      - "(mongodb|postgres|mysql|redis|amqp)://[^\\s'\"#]{10,}"
+    message: "Database connection string with credentials in YAML"
+    severity: ERROR
+    cwe: "CWE-798"
+    category: secrets
+    languages: [yaml]
+
+  - id: yaml.secrets.yml005
+    patterns:
+      - "-----BEGIN (RSA |EC |DSA )?PRIVATE KEY-----"
+    message: "Private key embedded in YAML file"
+    severity: ERROR
+    cwe: "CWE-321"
+    category: secrets
+    languages: [yaml]
+
+  - id: yaml.deserialization.yml006
+    patterns:
+      - "!!python/"
+    message: "YAML Python tag — arbitrary code execution on load"
+    severity: ERROR
+    cwe: "CWE-502"
+    category: deserialization
+    languages: [yaml]
+
+  - id: yaml.deserialization.yml007
+    patterns:
+      - "!!ruby/"
+    message: "YAML Ruby tag — arbitrary code execution on load"
+    severity: ERROR
+    cwe: "CWE-502"
+    category: deserialization
+    languages: [yaml]
+
+  - id: yaml.deserialization.yml008
+    patterns:
+      - "!!java/"
+    message: "YAML Java tag — arbitrary code execution on load"
+    severity: ERROR
+    cwe: "CWE-502"
+    category: deserialization
+    languages: [yaml]
+
+  - id: yaml.deserialization.yml009
+    patterns:
+      - "\\!\\!.*Deserialize|\\!\\!.*eval"
+    message: "YAML unsafe deserialization tag"
+    severity: ERROR
+    cwe: "CWE-502"
+    category: deserialization
+    languages: [yaml]
+
+  - id: yaml.configuration.yml010
+    patterns:
+      - "debug\\s*:\\s*(true|yes|on|1)"
+    message: "Debug mode enabled in configuration"
+    severity: WARNING
+    cwe: "CWE-489"
+    category: configuration
+    languages: [yaml]
+
+  - id: yaml.network.yml011
+    patterns:
+      - "ssl_verify\\s*:\\s*(false|no|off|0)"
+    message: "SSL verification disabled in configuration"
+    severity: ERROR
+    cwe: "CWE-295"
+    category: network
+    languages: [yaml]
+
+  - id: yaml.network.yml012
+    patterns:
+      - "verify_ssl\\s*:\\s*(false|no|off|0)"
+    message: "SSL verification disabled"
+    severity: ERROR
+    cwe: "CWE-295"
+    category: network
+    languages: [yaml]
+
+  - id: yaml.network.yml013
+    patterns:
+      - "tls_verify\\s*:\\s*(false|no|off|0)"
+    message: "TLS verification disabled"
+    severity: ERROR
+    cwe: "CWE-295"
+    category: network
+    languages: [yaml]
+
+  - id: yaml.network.yml014
+    patterns:
+      - "allowed_hosts\\s*:\\s*\\[?\\s*['\"]?\\*['\"]?"
+    message: "Wildcard allowed hosts — accepts connections from any origin"
+    severity: WARNING
+    cwe: "CWE-942"
+    category: network
+    languages: [yaml]
+
+  - id: yaml.network.yml015
+    patterns:
+      - "cors_origins\\s*:\\s*\\[?\\s*['\"]?\\*['\"]?"
+    message: "Wildcard CORS origins"
+    severity: WARNING
+    cwe: "CWE-942"
+    category: network
+    languages: [yaml]
+
+  - id: yaml.secrets.yml016
+    patterns:
+      - "admin_password|root_password|master_password"
+    message: "Admin/root password field in configuration"
+    severity: WARNING
+    cwe: "CWE-798"
+    category: secrets
+    languages: [yaml]
+
+  - id: yaml.crypto.yml017
+    patterns:
+      - "encryption_key\\s*:\\s*['\"]?[A-Za-z0-9]{16,}"
+    message: "Hardcoded encryption key in configuration"
+    severity: ERROR
+    cwe: "CWE-321"
+    category: crypto
+    languages: [yaml]
+
+  - id: yaml.secrets.yml018
+    patterns:
+      - "AWS_ACCESS_KEY_ID|AWS_SECRET_ACCESS_KEY"
+    message: "AWS credentials in YAML configuration"
+    severity: ERROR
+    cwe: "CWE-798"
+    category: secrets
+    languages: [yaml]
+
+  - id: yaml.secrets.yml019
+    patterns:
+      - "OPENAI_API_KEY|ANTHROPIC_API_KEY"
+    message: "LLM API key in YAML configuration"
+    severity: ERROR
+    cwe: "CWE-798"
+    category: secrets
+    languages: [yaml]
+
+  - id: yaml.network.yml020
+    patterns:
+      - "insecure_skip_verify\\s*:\\s*(true|yes)"
+    message: "TLS verification skipped in configuration"
+    severity: ERROR
+    cwe: "CWE-295"
+    category: network
+    languages: [yaml]

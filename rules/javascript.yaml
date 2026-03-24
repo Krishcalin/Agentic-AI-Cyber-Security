@@ -20,8 +20,8 @@ rules:
     message: "SQL query built with string concatenation — SQL injection"
     cwe: CWE-89
     patterns:
-      - '\.query\s*\(\s*["\'].*\+\s*\w+'
-      - '\.execute\s*\(\s*["\'].*\+\s*\w+'
+      - '\.query\s*\(\s*["''].*\+\s*\w+'
+      - '\.execute\s*\(\s*["''].*\+\s*\w+'
     confidence: high
 
   - id: javascript.injection.command-exec
@@ -61,8 +61,8 @@ rules:
     message: "setTimeout/setInterval with string argument — implicit eval"
     cwe: CWE-95
     patterns:
-      - 'setTimeout\s*\(\s*["\']'
-      - 'setInterval\s*\(\s*["\']'
+      - 'setTimeout\s*\(\s*["'']'
+      - 'setInterval\s*\(\s*["'']'
       - 'setTimeout\s*\(\s*\w+[^,)]*\)'
     confidence: medium
 
@@ -149,7 +149,7 @@ rules:
     patterns:
       - "algorithm.*['\"]none['\"]"
       - "algorithms.*\\[.*['\"]none['\"]"
-      - 'expiresIn.*["\']0'
+      - 'expiresIn.*["'']0'
     confidence: medium
 
   # ==========================================================================
@@ -162,10 +162,10 @@ rules:
     cwe: CWE-798
     owasp: "A07:2021"
     patterns:
-      - 'password\s*[:=]\s*["\'][^"\']{4,}["\']'
-      - 'secret\s*[:=]\s*["\'][^"\']{4,}["\']'
-      - 'apiKey\s*[:=]\s*["\'][^"\']{4,}["\']'
-      - 'api_key\s*[:=]\s*["\'][^"\']{4,}["\']'
+      - 'password\s*[:=]\s*["''][^"'']{4,}["'']'
+      - 'secret\s*[:=]\s*["''][^"'']{4,}["'']'
+      - 'apiKey\s*[:=]\s*["''][^"'']{4,}["'']'
+      - 'api_key\s*[:=]\s*["''][^"'']{4,}["'']'
     confidence: medium
 
   - id: javascript.secrets.aws-key
@@ -183,8 +183,8 @@ rules:
     message: "Hardcoded JWT secret key"
     cwe: CWE-798
     patterns:
-      - 'jwt\.sign\s*\([^,]+,\s*["\'][^"\']{5,}["\']'
-      - 'JWT_SECRET\s*=\s*["\'][^"\']{5,}["\']'
+      - 'jwt\.sign\s*\([^,]+,\s*["''][^"'']{5,}["'']'
+      - 'JWT_SECRET\s*=\s*["''][^"'']{5,}["'']'
     confidence: high
 
   # ==========================================================================

@@ -9,11 +9,11 @@ rules:
     cwe: CWE-89
     owasp: "A03:2021"
     patterns:
-      - 'cursor\.execute\s*\(\s*f["\']'
-      - '\.execute\s*\(\s*f["\'].*SELECT'
-      - '\.execute\s*\(\s*f["\'].*INSERT'
-      - '\.execute\s*\(\s*f["\'].*UPDATE'
-      - '\.execute\s*\(\s*f["\'].*DELETE'
+      - 'cursor\.execute\s*\(\s*f["'']'
+      - '\.execute\s*\(\s*f["''].*SELECT'
+      - '\.execute\s*\(\s*f["''].*INSERT'
+      - '\.execute\s*\(\s*f["''].*UPDATE'
+      - '\.execute\s*\(\s*f["''].*DELETE'
     confidence: high
     fix_template: cwe_89
 
@@ -24,8 +24,8 @@ rules:
     cwe: CWE-89
     owasp: "A03:2021"
     patterns:
-      - 'cursor\.execute\s*\(\s*["\'].*%[sd]'
-      - '\.execute\s*\(\s*["\'].*%\s*\('
+      - 'cursor\.execute\s*\(\s*["''].*["'']\s*%\s*\('
+      - '\.execute\s*\(\s*["''].*["'']\s*%\s*\('
     confidence: high
 
   - id: python.injection.sql-string-concat
@@ -34,7 +34,7 @@ rules:
     message: "SQL query built with string concatenation — SQL injection risk"
     cwe: CWE-89
     patterns:
-      - '\.execute\s*\(\s*["\'].*\+\s*\w+'
+      - '\.execute\s*\(\s*["''].*\+\s*\w+'
       - '\.execute\s*\(\s*.*\.format\s*\('
     confidence: medium
 
@@ -45,7 +45,7 @@ rules:
     cwe: CWE-78
     owasp: "A03:2021"
     patterns:
-      - 'os\.system\s*\(\s*f["\']'
+      - 'os\.system\s*\(\s*f["'']'
       - 'os\.system\s*\(\s*\w+\s*\+'
       - 'os\.system\s*\(\s*.*\.format'
       - 'os\.system\s*\(\s*.*%\s*\w+'
@@ -76,7 +76,7 @@ rules:
     cwe: CWE-95
     patterns:
       - 'eval\s*\(\s*\w+[^)]*\)'
-      - 'eval\s*\(\s*f["\']'
+      - 'eval\s*\(\s*f["'']'
       - 'eval\s*\(\s*.*\.format'
       - 'eval\s*\(\s*input\s*\('
     confidence: high
@@ -88,7 +88,7 @@ rules:
     cwe: CWE-95
     patterns:
       - 'exec\s*\(\s*\w+[^)]*\)'
-      - 'exec\s*\(\s*f["\']'
+      - 'exec\s*\(\s*f["'']'
       - 'exec\s*\(\s*.*\.format'
     confidence: high
 
@@ -109,7 +109,7 @@ rules:
     message: "XPath query with variable input — XPath injection risk"
     cwe: CWE-643
     patterns:
-      - '\.xpath\s*\(\s*f["\']'
+      - '\.xpath\s*\(\s*f["'']'
       - '\.xpath\s*\(\s*.*\.format'
       - '\.xpath\s*\(\s*.*%\s*\w+'
     confidence: medium
@@ -120,8 +120,8 @@ rules:
     message: "LDAP query with variable input — LDAP injection risk"
     cwe: CWE-90
     patterns:
-      - 'ldap\.search\s*\(.*f["\']'
-      - 'ldap_filter\s*=\s*f["\']'
+      - 'ldap\.search\s*\(.*f["'']'
+      - 'ldap_filter\s*=\s*f["'']'
     confidence: medium
 
   # ==========================================================================
@@ -186,8 +186,8 @@ rules:
     message: "Hardcoded initialization vector — use random IV"
     cwe: CWE-329
     patterns:
-      - 'iv\s*=\s*b["\'][^"\']{16,}["\']'
-      - 'IV\s*=\s*b["\']'
+      - 'iv\s*=\s*b["''][^"'']{16,}["'']'
+      - 'IV\s*=\s*b["'']'
     confidence: medium
 
   - id: python.crypto.ecb-mode
@@ -210,10 +210,10 @@ rules:
     cwe: CWE-798
     owasp: "A07:2021"
     patterns:
-      - 'password\s*=\s*["\'][^"\']{4,}["\']'
-      - 'passwd\s*=\s*["\'][^"\']{4,}["\']'
-      - 'secret\s*=\s*["\'][^"\']{4,}["\']'
-      - 'api_key\s*=\s*["\'][^"\']{4,}["\']'
+      - 'password\s*=\s*["''][^"'']{4,}["'']'
+      - 'passwd\s*=\s*["''][^"'']{4,}["'']'
+      - 'secret\s*=\s*["''][^"'']{4,}["'']'
+      - 'api_key\s*=\s*["''][^"'']{4,}["'']'
     confidence: medium
 
   - id: python.secrets.hardcoded-token
@@ -222,9 +222,9 @@ rules:
     message: "Hardcoded API token or key detected"
     cwe: CWE-798
     patterns:
-      - 'token\s*=\s*["\'][A-Za-z0-9_\-]{20,}["\']'
-      - 'TOKEN\s*=\s*["\'][A-Za-z0-9_\-]{20,}["\']'
-      - 'API_KEY\s*=\s*["\'][A-Za-z0-9_\-]{20,}["\']'
+      - 'token\s*=\s*["''][A-Za-z0-9_\-]{20,}["'']'
+      - 'TOKEN\s*=\s*["''][A-Za-z0-9_\-]{20,}["'']'
+      - 'API_KEY\s*=\s*["''][A-Za-z0-9_\-]{20,}["'']'
     confidence: medium
 
   - id: python.secrets.aws-key
@@ -312,8 +312,8 @@ rules:
     message: "Server bound to 0.0.0.0 — accessible from all networks"
     cwe: CWE-200
     patterns:
-      - '\.bind\s*\(\s*["\']0\.0\.0\.0["\']'
-      - 'host\s*=\s*["\']0\.0\.0\.0["\']'
+      - '\.bind\s*\(\s*["'']0\.0\.0\.0["'']'
+      - 'host\s*=\s*["'']0\.0\.0\.0["'']'
     confidence: medium
 
   - id: python.network.http-no-timeout
@@ -335,7 +335,7 @@ rules:
     cwe: CWE-22
     owasp: "A01:2021"
     patterns:
-      - 'open\s*\(\s*f["\']'
+      - 'open\s*\(\s*f["'']'
       - 'open\s*\(\s*.*\+\s*\w+'
       - 'open\s*\(\s*os\.path\.join\s*\(\s*\w+.*\w+'
     confidence: medium
@@ -377,7 +377,7 @@ rules:
     message: "Django SECRET_KEY hardcoded in source"
     cwe: CWE-798
     patterns:
-      - 'SECRET_KEY\s*=\s*["\'][^"\']{10,}["\']'
+      - 'SECRET_KEY\s*=\s*["''][^"'']{10,}["'']'
     confidence: high
 
   - id: python.django.csrf-exempt
@@ -396,7 +396,7 @@ rules:
     message: "Django raw SQL query — use ORM or parameterized queries"
     cwe: CWE-89
     patterns:
-      - '\.raw\s*\(\s*f["\']'
+      - '\.raw\s*\(\s*f["'']'
       - '\.extra\s*\(\s*.*where\s*='
     confidence: high
 

@@ -173,7 +173,7 @@ class MCPAuditor:
 
         # Check for hidden instructions in response
         injection_patterns = [
-            (r"(?:ignore|forget|override|disregard)\s+(?:previous|prior|all)\s+(?:instructions?|rules?)",
+            (r"(?:ignore|forget|override|disregard)\s+(?:(?:all\s+)?(?:previous|prior|earlier)|all)\s+(?:instructions?|rules?)",
              "Hidden instruction override in tool response"),
             (r"(?:system|assistant|user)\s*:", "Role injection in tool response"),
             (r"<\s*/?\s*(?:system|instruction|prompt)\s*>", "XML tag injection in tool response"),

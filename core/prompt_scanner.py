@@ -171,7 +171,7 @@ def _build_patterns() -> list[PromptPattern]:
     # ── System Prompt Extraction ───────────────────────────────────────
     add("extract-system-prompt", "extraction",
         "Attempt to extract system prompt / instructions",
-        r"(repeat|show|display|reveal|print|output|tell\s+me|what\s+(is|are))\s+(your|the)\s+(system\s+)?(prompt|instructions?|rules?|guidelines?|original\s+message|initial\s+prompt|context|configuration)",
+        r"(repeat|show|display|reveal|print|output|tell\s+me|what\s+(is|are))\s+(me\s+)?(your|the)\s+(system\s+|original\s+)?(prompt|instructions?|rules?|guidelines?|original\s+message|initial\s+prompt|context|configuration)",
         RiskLevel.HIGH, tags=["extraction", "system-prompt"])
 
     add("start-with", "extraction",
@@ -249,7 +249,7 @@ def _build_patterns() -> list[PromptPattern]:
     # ── LLM Tool / Function Calling Abuse ──────────────────────────────
     add("tool-call-injection", "tool_abuse",
         "Attempt to inject fake tool/function calls",
-        r"(tool_use|function_call|tool_calls?|functions?)\s*[:\[{]\s*['\"]?\s*(name|function|type)",
+        r"(tool_use|function_call|tool_calls?|functions?)\s*[:\[{]\s*\{?\s*['\"]?\s*(name|function|type)",
         RiskLevel.CRITICAL, tags=["tool-abuse", "function-calling"])
 
     add("tool-result-spoof", "tool_abuse",
@@ -323,7 +323,7 @@ def _build_patterns() -> list[PromptPattern]:
     # ── Multi-turn / Conversation Attacks ──────────────────────────────
     add("context-window-stuff", "multi_turn",
         "Context window stuffing to push out system prompt",
-        r"(repeat\s+(the\s+following|this)\s+(text|word|phrase)\s+\d{2,}\s+times|write\s+.{0,20}\s+\d{3,}\s+times)",
+        r"(repeat\s+(the\s+following|the\s+word|this)\s+.{0,30}\d{2,}\s+times|write\s+.{0,20}\s+\d{3,}\s+times)",
         RiskLevel.MEDIUM, "medium", tags=["multi-turn", "stuffing"])
 
     add("conversation-reset", "multi_turn",

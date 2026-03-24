@@ -214,6 +214,6 @@ LANGUAGE_EXTENSIONS: dict[str, str] = {
 def detect_language(file_path: str) -> str:
     """Detect language from file extension."""
     p = Path(file_path)
-    if p.name.lower() in ("dockerfile", "containerfile"):
+    if p.name.lower() in ("dockerfile", "containerfile") or p.name.lower().startswith("dockerfile"):
         return "dockerfile"
     return LANGUAGE_EXTENSIONS.get(p.suffix.lower(), "unknown")

@@ -6,7 +6,7 @@ rules:
   - id: multilang-ignore
     category: jailbreak
     description: "Non-English instruction override (Spanish/French/German/Chinese)"
-    pattern: "(ignora\s+las\s+instrucciones|ignorez\s+les\s+instructions|ignoriere\s+die\s+Anweisungen|\u5ffd\u7565\u4e4b\u524d\u7684\u6307\u4ee4)"
+    pattern: '(ignora\s+las\s+instrucciones|ignorez\s+les\s+instructions|ignoriere\s+die\s+Anweisungen|\u5ffd\u7565\u4e4b\u524d\u7684\u6307\u4ee4)'
     risk: high
     confidence: medium
     tags: [jailbreak, multilingual]
@@ -14,7 +14,7 @@ rules:
   - id: base64-injection
     category: evasion
     description: "Base64-encoded prompt injection payload"
-    pattern: "(decode|atob|b64decode|base64\\.decode)\\s*\\(\\s*['\"][A-Za-z0-9+/=]{20,}['\"]"
+    pattern: '(decode|atob|b64decode|base64\\.decode)\\s*\\(\\s*[''\"][A-Za-z0-9+/=]{20,}[''\"]'
     risk: high
     confidence: medium
     tags: [evasion, encoding]
@@ -22,7 +22,7 @@ rules:
   - id: rot13-injection
     category: evasion
     description: "ROT13-encoded instruction bypass"
-    pattern: "(rot13|codecs\\.decode.*rot.13)"
+    pattern: '(rot13|codecs\\.decode.*rot.13)'
     risk: medium
     confidence: low
     tags: [evasion, encoding]
@@ -31,7 +31,7 @@ rules:
   - id: agent-loop
     category: tool_abuse
     description: "Instruction to create infinite agent loop"
-    pattern: "(call\s+yourself|invoke\s+yourself|recursively\s+(call|run)|infinite\s+loop|keep\s+(running|calling)\s+(until|forever))"
+    pattern: '(call\s+yourself|invoke\s+yourself|recursively\s+(call|run)|infinite\s+loop|keep\s+(running|calling)\s+(until|forever))'
     risk: high
     confidence: medium
     tags: [tool-abuse, agent-loop]
@@ -39,7 +39,7 @@ rules:
   - id: agent-permission-escalation
     category: tool_abuse
     description: "Attempt to escalate agent permissions"
-    pattern: "(grant\s+(yourself|me)\s+(admin|root|full)\s+(access|permission)|elevate\s+(your|my)\s+privilege|enable\s+all\s+tools|unlock\s+all\s+(capabilities|features))"
+    pattern: '(grant\s+(yourself|me)\s+(admin|root|full)\s+(access|permission)|elevate\s+(your|my)\s+privilege|enable\s+all\s+tools|unlock\s+all\s+(capabilities|features))'
     risk: critical
     confidence: high
     tags: [tool-abuse, permission-escalation]
@@ -47,7 +47,7 @@ rules:
   - id: agent-data-collection
     category: exfiltration
     description: "Instruction to collect and transmit user data"
-    pattern: "(collect|gather|harvest)\s+.{0,30}(user|customer|personal|private|sensitive)\s+(data|information|details).{0,50}(send|transmit|upload|post|email)"
+    pattern: '(collect|gather|harvest)\s+.{0,30}(user|customer|personal|private|sensitive)\s+(data|information|details).{0,50}(send|transmit|upload|post|email)'
     risk: critical
     confidence: high
     tags: [exfiltration, data-collection]
@@ -56,7 +56,7 @@ rules:
   - id: install-package-prompt
     category: tool_abuse
     description: "Prompt injection to install malicious packages"
-    pattern: "(pip\s+install|npm\s+install|cargo\s+add)\s+[a-z0-9_-]*(malicious|backdoor|hack|evil|trojan)"
+    pattern: '(pip\s+install|npm\s+install|cargo\s+add)\s+[a-z0-9_-]*(malicious|backdoor|hack|evil|trojan)'
     risk: critical
     confidence: high
     tags: [tool-abuse, supply-chain]
@@ -64,7 +64,7 @@ rules:
   - id: curl-pipe-bash
     category: tool_abuse
     description: "curl|bash anti-pattern requested via prompt"
-    pattern: "curl\s+.*\\|\s*(bash|sh|zsh|python|node)"
+    pattern: 'curl\s+.*\|\s*(bash|sh|zsh|python|node)'
     risk: critical
     confidence: high
     tags: [tool-abuse, remote-code-execution]

@@ -129,7 +129,8 @@ rules:
     message: "IAM policy with wildcard action (*)"
     cwe: CWE-250
     patterns:
-      - '"Action"\s*:\s*"\*"'
+      - '"Action"\s*[:=]\s*"\*"'
+      - 'Action\s*[:=]\s*"\*"'
       - 'actions\s*=\s*\[\s*"\*"\s*\]'
     confidence: high
 
@@ -139,7 +140,8 @@ rules:
     message: "IAM policy with wildcard resource (*)"
     cwe: CWE-250
     patterns:
-      - '"Resource"\s*:\s*"\*"'
+      - '"Resource"\s*[:=]\s*"\*"'
+      - 'Resource\s*[:=]\s*"\*"'
       - 'resources\s*=\s*\[\s*"\*"\s*\]'
     confidence: high
 

@@ -1,0 +1,283 @@
+rules:
+  # ── Injection & Code Execution ─────────────────────────────────────────
+  - id: swift.injection.sw001
+    patterns:
+      - "Process\\(\\)"
+    message: "Process execution — validate command arguments"
+    severity: WARNING
+    cwe: "CWE-78"
+    category: injection
+    languages: [swift]
+
+  - id: swift.injection.sw002
+    patterns:
+      - "NSTask\\("
+    message: "NSTask subprocess execution — validate command input"
+    severity: WARNING
+    cwe: "CWE-78"
+    category: injection
+    languages: [swift]
+
+  - id: swift.xss.sw003
+    patterns:
+      - "\\.evaluateJavaScript\\("
+    message: "JavaScript evaluation in WKWebView — XSS risk"
+    severity: ERROR
+    cwe: "CWE-79"
+    owasp: "A03:2021"
+    category: xss
+    languages: [swift]
+
+  - id: swift.xss.sw004
+    patterns:
+      - "javaScriptEnabled\\s*=\\s*true"
+    message: "JavaScript enabled in WebView — injection risk"
+    severity: WARNING
+    cwe: "CWE-79"
+    category: xss
+    languages: [swift]
+
+  # ── Cryptography ───────────────────────────────────────────────────────
+  - id: swift.crypto.sw005
+    patterns:
+      - "CC_MD5\\("
+    message: "MD5 hash — cryptographically broken, use SHA-256"
+    severity: WARNING
+    cwe: "CWE-328"
+    category: crypto
+    languages: [swift]
+
+  - id: swift.crypto.sw006
+    patterns:
+      - "CC_SHA1\\("
+    message: "SHA-1 hash — deprecated for security use"
+    severity: WARNING
+    cwe: "CWE-328"
+    category: crypto
+    languages: [swift]
+
+  - id: swift.crypto.sw007
+    patterns:
+      - "kSecAttrAccessibleAlways"
+    message: "Keychain item accessible when device locked — data at rest risk"
+    severity: ERROR
+    cwe: "CWE-311"
+    category: crypto
+    languages: [swift]
+
+  - id: swift.crypto.sw008
+    patterns:
+      - "kSecAttrAccessibleAlwaysThisDeviceOnly"
+    message: "Keychain accessible always — use WhenUnlocked instead"
+    severity: WARNING
+    cwe: "CWE-311"
+    category: crypto
+    languages: [swift]
+
+  - id: swift.crypto.sw009
+    patterns:
+      - "SecRandomCopyBytes"
+    message: "Verify using correct buffer size for cryptographic random"
+    severity: INFO
+    cwe: "CWE-338"
+    category: crypto
+    languages: [swift]
+
+  - id: swift.crypto.sw010
+    patterns:
+      - "arc4random\\(\\)"
+    message: "arc4random — verify appropriate for security context"
+    severity: INFO
+    cwe: "CWE-338"
+    category: crypto
+    languages: [swift]
+
+  # ── Network Security ───────────────────────────────────────────────────
+  - id: swift.network.sw011
+    patterns:
+      - "allowsArbitraryLoads.*true"
+    message: "ATS disabled — allows cleartext HTTP connections"
+    severity: ERROR
+    cwe: "CWE-319"
+    owasp: "A02:2021"
+    category: network
+    languages: [swift]
+
+  - id: swift.network.sw012
+    patterns:
+      - "NSExceptionAllowsInsecureHTTPLoads"
+    message: "ATS exception for insecure HTTP — verify domain necessity"
+    severity: WARNING
+    cwe: "CWE-319"
+    category: network
+    languages: [swift]
+
+  - id: swift.network.sw013
+    patterns:
+      - "serverTrust.*accept"
+    message: "Accepting server trust without validation — MITM risk"
+    severity: ERROR
+    cwe: "CWE-295"
+    category: network
+    languages: [swift]
+
+  - id: swift.error_handling.sw014
+    patterns:
+      - "URLSession.*completionHandler.*Error.*nil"
+    message: "Ignoring URL session errors — may hide security issues"
+    severity: WARNING
+    cwe: "CWE-754"
+    category: error_handling
+    languages: [swift]
+
+  # ── Data Storage & Secrets ─────────────────────────────────────────────
+  - id: swift.secrets.sw015
+    patterns:
+      - "UserDefaults.*password"
+    message: "Storing password in UserDefaults — use Keychain instead"
+    severity: ERROR
+    cwe: "CWE-312"
+    owasp: "A02:2021"
+    category: secrets
+    languages: [swift]
+
+  - id: swift.secrets.sw016
+    patterns:
+      - "UserDefaults.*secret"
+    message: "Storing secret in UserDefaults — not encrypted"
+    severity: ERROR
+    cwe: "CWE-312"
+    category: secrets
+    languages: [swift]
+
+  - id: swift.secrets.sw017
+    patterns:
+      - "UserDefaults.*token"
+    message: "Storing token in UserDefaults — use Keychain instead"
+    severity: WARNING
+    cwe: "CWE-312"
+    category: secrets
+    languages: [swift]
+
+  - id: swift.secrets.sw018
+    patterns:
+      - "(password|secret|apiKey|token)\\s*[:=]\\s*\"[^\"]{8,}\""
+    message: "Hardcoded credential in Swift source code"
+    severity: ERROR
+    cwe: "CWE-798"
+    owasp: "A02:2021"
+    category: secrets
+    languages: [swift]
+
+  # ── SQL & Database ─────────────────────────────────────────────────────
+  - id: swift.injection.sw019
+    patterns:
+      - "sqlite3_exec.*\\\\\\("
+    message: "SQL injection — string interpolation in SQLite query"
+    severity: ERROR
+    cwe: "CWE-89"
+    owasp: "A03:2021"
+    category: injection
+    languages: [swift]
+
+  - id: swift.injection.sw020
+    patterns:
+      - "rawQuery.*\\\\\\("
+    message: "SQL injection via string interpolation in raw query"
+    severity: ERROR
+    cwe: "CWE-89"
+    category: injection
+    languages: [swift]
+
+  # ── Input Validation ───────────────────────────────────────────────────
+  - id: swift.injection.sw021
+    patterns:
+      - "canOpenURL.*javascript:"
+    message: "JavaScript URL scheme — code execution risk"
+    severity: ERROR
+    cwe: "CWE-94"
+    category: injection
+    languages: [swift]
+
+  - id: swift.injection.sw022
+    patterns:
+      - "openURL.*\\\\\\("
+    message: "Opening URL with interpolated user input — SSRF risk"
+    severity: WARNING
+    cwe: "CWE-918"
+    category: injection
+    languages: [swift]
+
+  - id: swift.privacy.sw023
+    patterns:
+      - "UIPasteboard\\.general"
+    message: "Clipboard access — sensitive data exposure risk"
+    severity: INFO
+    cwe: "CWE-200"
+    category: privacy
+    languages: [swift]
+
+  # ── Memory & Safety ────────────────────────────────────────────────────
+  - id: swift.memory_safety.sw024
+    patterns:
+      - "unsafeBitCast"
+    message: "unsafeBitCast bypasses type safety — verify correctness"
+    severity: WARNING
+    cwe: "CWE-704"
+    category: memory_safety
+    languages: [swift]
+
+  - id: swift.memory_safety.sw025
+    patterns:
+      - "UnsafeMutablePointer"
+    message: "Unsafe mutable pointer — manual memory management required"
+    severity: WARNING
+    cwe: "CWE-119"
+    category: memory_safety
+    languages: [swift]
+
+  - id: swift.memory_safety.sw026
+    patterns:
+      - "UnsafeRawPointer"
+    message: "Unsafe raw pointer — verify alignment and lifetime"
+    severity: WARNING
+    cwe: "CWE-119"
+    category: memory_safety
+    languages: [swift]
+
+  # ── Logging & Debugging ────────────────────────────────────────────────
+  - id: swift.logging.sw027
+    patterns:
+      - "print\\(.*password"
+    message: "Logging password — remove before production"
+    severity: ERROR
+    cwe: "CWE-532"
+    category: logging
+    languages: [swift]
+
+  - id: swift.logging.sw028
+    patterns:
+      - "NSLog.*password"
+    message: "NSLog with password — logs are not encrypted on device"
+    severity: ERROR
+    cwe: "CWE-532"
+    category: logging
+    languages: [swift]
+
+  - id: swift.logging.sw029
+    patterns:
+      - "debugPrint\\("
+    message: "debugPrint in production code — may leak sensitive info"
+    severity: INFO
+    cwe: "CWE-532"
+    category: logging
+    languages: [swift]
+
+  - id: swift.configuration.sw030
+    patterns:
+      - "#if\\s+DEBUG"
+    message: "Debug conditional — verify no security bypasses in debug mode"
+    severity: INFO
+    cwe: "CWE-489"
+    category: configuration
+    languages: [swift]

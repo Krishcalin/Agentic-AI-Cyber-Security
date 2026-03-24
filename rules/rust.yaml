@@ -1,0 +1,281 @@
+rules:
+  # ── Unsafe Code ────────────────────────────────────────────────────────
+  - id: rust.memory_safety.rs001
+    patterns:
+      - "unsafe\\s*\\{"
+    message: "Unsafe block — manual memory safety review required"
+    severity: WARNING
+    cwe: "CWE-119"
+    category: memory_safety
+    languages: [rust]
+
+  - id: rust.memory_safety.rs002
+    patterns:
+      - "unsafe\\s+impl"
+    message: "Unsafe trait implementation — verify safety invariants"
+    severity: WARNING
+    cwe: "CWE-119"
+    category: memory_safety
+    languages: [rust]
+
+  - id: rust.memory_safety.rs003
+    patterns:
+      - "unsafe\\s+fn"
+    message: "Unsafe function — callers must maintain safety invariants"
+    severity: WARNING
+    cwe: "CWE-119"
+    category: memory_safety
+    languages: [rust]
+
+  # ── Memory Safety ──────────────────────────────────────────────────────
+  - id: rust.memory_safety.rs004
+    patterns:
+      - "std::mem::transmute"
+    message: "transmute — bypasses type safety, can cause UB"
+    severity: ERROR
+    cwe: "CWE-704"
+    category: memory_safety
+    languages: [rust]
+
+  - id: rust.memory_safety.rs005
+    patterns:
+      - "\\.as_ptr\\(\\)"
+    message: "Raw pointer creation — verify lifetime and alignment"
+    severity: INFO
+    cwe: "CWE-119"
+    category: memory_safety
+    languages: [rust]
+
+  - id: rust.memory_safety.rs006
+    patterns:
+      - "std::mem::forget"
+    message: "mem::forget prevents Drop — potential resource leak"
+    severity: WARNING
+    cwe: "CWE-401"
+    category: memory_safety
+    languages: [rust]
+
+  - id: rust.memory_safety.rs007
+    patterns:
+      - "ManuallyDrop"
+    message: "ManuallyDrop — manual resource management, verify drop semantics"
+    severity: INFO
+    cwe: "CWE-401"
+    category: memory_safety
+    languages: [rust]
+
+  - id: rust.error_handling.rs008
+    patterns:
+      - "\\.unwrap\\(\\)"
+    message: "unwrap() panics on None/Err — use ? operator or match"
+    severity: INFO
+    cwe: "CWE-252"
+    category: error_handling
+    languages: [rust]
+
+  - id: rust.memory_safety.rs009
+    patterns:
+      - "Box::from_raw"
+    message: "Box::from_raw — double-free if pointer already owned"
+    severity: ERROR
+    cwe: "CWE-415"
+    category: memory_safety
+    languages: [rust]
+
+  - id: rust.memory_safety.rs010
+    patterns:
+      - "slice::from_raw_parts"
+    message: "slice::from_raw_parts — UB if pointer/length invalid"
+    severity: ERROR
+    cwe: "CWE-119"
+    category: memory_safety
+    languages: [rust]
+
+  # ── Cryptography ───────────────────────────────────────────────────────
+  - id: rust.crypto.rs011
+    patterns:
+      - "rand::thread_rng"
+    message: "Verify using cryptographic RNG for security-sensitive operations"
+    severity: INFO
+    cwe: "CWE-338"
+    category: crypto
+    languages: [rust]
+
+  - id: rust.crypto.rs012
+    patterns:
+      - "md5::"
+    message: "MD5 hash — cryptographically broken, use SHA-256+"
+    severity: WARNING
+    cwe: "CWE-328"
+    category: crypto
+    languages: [rust]
+
+  - id: rust.crypto.rs013
+    patterns:
+      - "sha1::"
+    message: "SHA-1 hash — deprecated for security use"
+    severity: WARNING
+    cwe: "CWE-328"
+    category: crypto
+    languages: [rust]
+
+  - id: rust.crypto.rs014
+    patterns:
+      - "danger_accept_invalid_certs\\(true\\)"
+    message: "TLS certificate validation disabled — MITM risk"
+    severity: ERROR
+    cwe: "CWE-295"
+    category: crypto
+    languages: [rust]
+
+  - id: rust.crypto.rs015
+    patterns:
+      - "danger_accept_invalid_hostnames\\(true\\)"
+    message: "TLS hostname verification disabled — MITM risk"
+    severity: ERROR
+    cwe: "CWE-295"
+    category: crypto
+    languages: [rust]
+
+  # ── SQL & Command Injection ────────────────────────────────────────────
+  - id: rust.injection.rs016
+    patterns:
+      - "format!\\(.*SELECT.*FROM"
+    message: "SQL injection — string formatting in SQL query"
+    severity: ERROR
+    cwe: "CWE-89"
+    owasp: "A03:2021"
+    category: injection
+    languages: [rust]
+
+  - id: rust.injection.rs017
+    patterns:
+      - "Command::new\\(.*format!"
+    message: "Command injection — formatted string in process command"
+    severity: ERROR
+    cwe: "CWE-78"
+    owasp: "A03:2021"
+    category: injection
+    languages: [rust]
+
+  - id: rust.injection.rs018
+    patterns:
+      - "std::process::Command.*\\.arg\\(.*format!"
+    message: "Potential command injection via formatted argument"
+    severity: WARNING
+    cwe: "CWE-78"
+    category: injection
+    languages: [rust]
+
+  # ── Deserialization ────────────────────────────────────────────────────
+  - id: rust.deserialization.rs019
+    patterns:
+      - "serde_yaml::from_"
+    message: "YAML deserialization — validate input source and schema"
+    severity: INFO
+    cwe: "CWE-502"
+    category: deserialization
+    languages: [rust]
+
+  - id: rust.deserialization.rs020
+    patterns:
+      - "bincode::deserialize"
+    message: "Binary deserialization — validate input is trusted"
+    severity: WARNING
+    cwe: "CWE-502"
+    category: deserialization
+    languages: [rust]
+
+  # ── FFI & Interop ──────────────────────────────────────────────────────
+  - id: rust.ffi.rs021
+    patterns:
+      - "extern\\s+\"C\""
+    message: "FFI boundary — verify ABI compatibility and null safety"
+    severity: INFO
+    cwe: "CWE-119"
+    category: ffi
+    languages: [rust]
+
+  - id: rust.ffi.rs022
+    patterns:
+      - "CString::from_raw"
+    message: "CString::from_raw — must have been allocated by CString"
+    severity: WARNING
+    cwe: "CWE-119"
+    category: ffi
+    languages: [rust]
+
+  - id: rust.ffi.rs023
+    patterns:
+      - "std::ffi::CStr::from_ptr"
+    message: "CStr::from_ptr — UB if pointer is null or not null-terminated"
+    severity: WARNING
+    cwe: "CWE-119"
+    category: ffi
+    languages: [rust]
+
+  # ── Concurrency ────────────────────────────────────────────────────────
+  - id: rust.concurrency.rs024
+    patterns:
+      - "static\\s+mut\\s+"
+    message: "Mutable static — data race risk without synchronization"
+    severity: ERROR
+    cwe: "CWE-362"
+    category: concurrency
+    languages: [rust]
+
+  - id: rust.concurrency.rs025
+    patterns:
+      - "\\.lock\\(\\)\\.unwrap\\(\\)"
+    message: "Mutex lock unwrap — panics if mutex is poisoned"
+    severity: WARNING
+    cwe: "CWE-362"
+    category: concurrency
+    languages: [rust]
+
+  # ── Path & File Operations ─────────────────────────────────────────────
+  - id: rust.path_traversal.rs026
+    patterns:
+      - "std::fs::(remove_dir_all|remove_file)"
+    message: "File/directory deletion — verify path is validated"
+    severity: INFO
+    cwe: "CWE-22"
+    category: path_traversal
+    languages: [rust]
+
+  - id: rust.path_traversal.rs027
+    patterns:
+      - "Path::new\\(.*format!"
+    message: "Path construction with formatted input — traversal risk"
+    severity: WARNING
+    cwe: "CWE-22"
+    category: path_traversal
+    languages: [rust]
+
+  # ── Secrets ────────────────────────────────────────────────────────────
+  - id: rust.secrets.rs028
+    patterns:
+      - "(password|secret|api_key|token)\\s*=\\s*\"[^\"]{8,}\""
+    message: "Hardcoded secret in source code"
+    severity: ERROR
+    cwe: "CWE-798"
+    category: secrets
+    languages: [rust]
+
+  - id: rust.configuration.rs029
+    patterns:
+      - "#\\[allow\\(unsafe_code\\)\\]"
+    message: "Blanket allow of unsafe code — reduces safety guarantees"
+    severity: WARNING
+    cwe: "CWE-119"
+    category: configuration
+    languages: [rust]
+
+  - id: rust.secrets.rs030
+    patterns:
+      - "std::env::var\\("
+    message: "Environment variable access — verify not logged or exposed"
+    severity: INFO
+    cwe: "CWE-532"
+    category: secrets
+    languages: [rust]

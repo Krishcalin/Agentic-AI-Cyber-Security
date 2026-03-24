@@ -6,7 +6,7 @@ from core.pattern_matcher import PatternMatcher
 
 class TestPatternMatcher:
     def test_load_rules(self, matcher: PatternMatcher):
-        assert matcher.rules_loaded is not None or len(matcher.rules) > 0
+        assert len(matcher.rules) > 0
 
     def test_scan_python_fixture(self, matcher: PatternMatcher, python_fixture: str):
         result = matcher.scan_file(python_fixture)

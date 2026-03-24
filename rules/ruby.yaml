@@ -110,9 +110,9 @@ rules:
     message: "Hardcoded credentials"
     cwe: CWE-798
     patterns:
-      - 'password\s*=\s*["\'][^"\']{4,}["\']'
-      - 'secret_key\s*=\s*["\'][^"\']{4,}["\']'
-      - 'api_key\s*=\s*["\'][^"\']{4,}["\']'
+      - 'password\s*=\s*["''][^"'']{4,}["'']'
+      - 'secret_key\s*=\s*["''][^"'']{4,}["'']'
+      - 'api_key\s*=\s*["''][^"'']{4,}["'']'
     confidence: medium
 
   # SSL

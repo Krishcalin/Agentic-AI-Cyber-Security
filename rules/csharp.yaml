@@ -1,0 +1,278 @@
+rules:
+  - id: csharp.injection.cs001
+    patterns:
+      - "SqlCommand\\(.*\\$\"|SqlCommand\\(.*\\+|string\\.Format.*SqlCommand"
+    message: "SQL injection — string concatenation/interpolation in SqlCommand"
+    severity: ERROR
+    cwe: "CWE-89"
+    owasp: "A03:2021"
+    category: injection
+    languages: [csharp]
+
+  - id: csharp.injection.cs002
+    patterns:
+      - "ExecuteReader\\(|ExecuteNonQuery\\(|ExecuteScalar\\("
+    message: "Verify SQL command uses parameterized queries"
+    severity: INFO
+    cwe: "CWE-89"
+    category: injection
+    languages: [csharp]
+
+  - id: csharp.injection.cs003
+    patterns:
+      - "Process\\.Start\\(.*\\$\"|Process\\.Start\\(.*\\+"
+    message: "Command injection — user input in Process.Start"
+    severity: ERROR
+    cwe: "CWE-78"
+    category: injection
+    languages: [csharp]
+
+  - id: csharp.deserialization.cs004
+    patterns:
+      - "Deserialize\\(|BinaryFormatter|SoapFormatter|ObjectStateFormatter|LosFormatter"
+    message: "Unsafe deserialization — BinaryFormatter is vulnerable to RCE"
+    severity: ERROR
+    cwe: "CWE-502"
+    owasp: "A08:2021"
+    category: deserialization
+    languages: [csharp]
+
+  - id: csharp.deserialization.cs005
+    patterns:
+      - "JsonConvert\\.DeserializeObject.*TypeNameHandling"
+    message: "JSON.NET TypeNameHandling enables arbitrary type instantiation"
+    severity: ERROR
+    cwe: "CWE-502"
+    category: deserialization
+    languages: [csharp]
+
+  - id: csharp.injection.cs006
+    patterns:
+      - "XmlDocument\\(\\)|XmlReader\\.Create.*DtdProcessing\\.Parse"
+    message: "XML External Entity (XXE) — disable DTD processing"
+    severity: ERROR
+    cwe: "CWE-611"
+    owasp: "A05:2021"
+    category: injection
+    languages: [csharp]
+
+  - id: csharp.xss.cs007
+    patterns:
+      - "innerHTML|@Html\\.Raw\\("
+    message: "XSS — unencoded HTML output"
+    severity: ERROR
+    cwe: "CWE-79"
+    owasp: "A03:2021"
+    category: xss
+    languages: [csharp]
+
+  - id: csharp.xss.cs008
+    patterns:
+      - "Response\\.Write\\(.*Request\\["
+    message: "Reflected XSS — user input written directly to response"
+    severity: ERROR
+    cwe: "CWE-79"
+    category: xss
+    languages: [csharp]
+
+  - id: csharp.authentication.cs009
+    patterns:
+      - "\\[AllowAnonymous\\]"
+    message: "AllowAnonymous — verify endpoint should be unauthenticated"
+    severity: INFO
+    cwe: "CWE-306"
+    category: authentication
+    languages: [csharp]
+
+  - id: csharp.csrf.cs010
+    patterns:
+      - "\\[ValidateAntiForgeryToken\\]"
+    message: "Anti-forgery token present — good CSRF protection"
+    severity: INFO
+    cwe: "CWE-352"
+    category: csrf
+    languages: [csharp]
+
+  - id: csharp.crypto.cs011
+    patterns:
+      - "MD5\\.Create\\(\\)|MD5CryptoServiceProvider"
+    message: "MD5 hash — cryptographically broken"
+    severity: WARNING
+    cwe: "CWE-328"
+    category: crypto
+    languages: [csharp]
+
+  - id: csharp.crypto.cs012
+    patterns:
+      - "SHA1\\.Create\\(\\)|SHA1CryptoServiceProvider|SHA1Managed"
+    message: "SHA-1 hash — deprecated for security use"
+    severity: WARNING
+    cwe: "CWE-328"
+    category: crypto
+    languages: [csharp]
+
+  - id: csharp.crypto.cs013
+    patterns:
+      - "DES\\.Create\\(\\)|DESCryptoServiceProvider|TripleDES"
+    message: "DES/3DES — weak encryption, use AES"
+    severity: WARNING
+    cwe: "CWE-327"
+    category: crypto
+    languages: [csharp]
+
+  - id: csharp.crypto.cs014
+    patterns:
+      - "RNGCryptoServiceProvider|RandomNumberGenerator\\.Create"
+    message: "Verify using cryptographic RNG for security context"
+    severity: INFO
+    cwe: "CWE-338"
+    category: crypto
+    languages: [csharp]
+
+  - id: csharp.crypto.cs015
+    patterns:
+      - "new Random\\("
+    message: "System.Random is not cryptographically secure"
+    severity: WARNING
+    cwe: "CWE-338"
+    category: crypto
+    languages: [csharp]
+
+  - id: csharp.secrets.cs016
+    patterns:
+      - "(password|secret|apiKey|connectionString)\\s*=\\s*\"[^\"]{8,}\""
+    message: "Hardcoded credential in C# source"
+    severity: ERROR
+    cwe: "CWE-798"
+    owasp: "A02:2021"
+    category: secrets
+    languages: [csharp]
+
+  - id: csharp.crypto.cs017
+    patterns:
+      - "ServerCertificateValidationCallback.*return\\s+true"
+    message: "TLS certificate validation bypassed — MITM risk"
+    severity: ERROR
+    cwe: "CWE-295"
+    category: crypto
+    languages: [csharp]
+
+  - id: csharp.file_ops.cs018
+    patterns:
+      - "Directory\\.Delete\\(.*true\\)|File\\.Delete\\("
+    message: "File/directory deletion — verify path is validated"
+    severity: INFO
+    cwe: "CWE-22"
+    category: file_ops
+    languages: [csharp]
+
+  - id: csharp.path_traversal.cs019
+    patterns:
+      - "Path\\.Combine\\(.*Request\\[|Path\\.Combine\\(.*input"
+    message: "Path traversal — user input in file path"
+    severity: ERROR
+    cwe: "CWE-22"
+    owasp: "A01:2021"
+    category: path_traversal
+    languages: [csharp]
+
+  - id: csharp.injection.cs020
+    patterns:
+      - "Regex\\(.*input|new Regex\\(.*Request"
+    message: "ReDoS — user input in regex pattern"
+    severity: ERROR
+    cwe: "CWE-1333"
+    category: injection
+    languages: [csharp]
+
+  - id: csharp.network.cs021
+    patterns:
+      - "HttpClient.*Timeout.*=.*TimeSpan\\.MaxValue|Timeout\\.Infinite"
+    message: "No HTTP timeout — DoS/resource exhaustion risk"
+    severity: WARNING
+    cwe: "CWE-400"
+    category: network
+    languages: [csharp]
+
+  - id: csharp.injection.cs022
+    patterns:
+      - "Assembly\\.Load\\(|Assembly\\.LoadFrom\\("
+    message: "Dynamic assembly loading — code injection risk"
+    severity: WARNING
+    cwe: "CWE-94"
+    category: injection
+    languages: [csharp]
+
+  - id: csharp.injection.cs023
+    patterns:
+      - "Activator\\.CreateInstance\\(.*Type\\.GetType"
+    message: "Dynamic type instantiation — verify input is trusted"
+    severity: WARNING
+    cwe: "CWE-470"
+    category: injection
+    languages: [csharp]
+
+  - id: csharp.logging.cs024
+    patterns:
+      - "Console\\.Write.*password|Debug\\.Write.*password|Trace\\.Write.*password"
+    message: "Logging password — remove before production"
+    severity: ERROR
+    cwe: "CWE-532"
+    category: logging
+    languages: [csharp]
+
+  - id: csharp.configuration.cs025
+    patterns:
+      - "\\[Obsolete\\]|#pragma\\s+warning\\s+disable"
+    message: "Suppressed warning — verify security implications"
+    severity: INFO
+    cwe: "CWE-710"
+    category: configuration
+    languages: [csharp]
+
+  - id: csharp.network.cs026
+    patterns:
+      - "CORS.*AllowAnyOrigin|EnableCors.*\\*"
+    message: "Wildcard CORS — allows any origin"
+    severity: WARNING
+    cwe: "CWE-942"
+    owasp: "A05:2021"
+    category: network
+    languages: [csharp]
+
+  - id: csharp.network.cs027
+    patterns:
+      - "WebClient\\(|HttpWebRequest\\.Create"
+    message: "Legacy HTTP client — use HttpClient with proper TLS"
+    severity: INFO
+    cwe: "CWE-295"
+    category: network
+    languages: [csharp]
+
+  - id: csharp.memory_safety.cs028
+    patterns:
+      - "unsafe\\s*\\{|fixed\\s*\\("
+    message: "Unsafe code block — manual memory management"
+    severity: WARNING
+    cwe: "CWE-119"
+    category: memory_safety
+    languages: [csharp]
+
+  - id: csharp.memory_safety.cs029
+    patterns:
+      - "Marshal\\.PtrToStructure|Marshal\\.Copy|Marshal\\.ReadByte"
+    message: "Unmanaged memory operations — buffer overflow risk"
+    severity: WARNING
+    cwe: "CWE-119"
+    category: memory_safety
+    languages: [csharp]
+
+  - id: csharp.injection.cs030
+    patterns:
+      - "LDAP.*\\$\"|DirectorySearcher.*\\+"
+    message: "LDAP injection — use parameterized LDAP queries"
+    severity: ERROR
+    cwe: "CWE-90"
+    owasp: "A03:2021"
+    category: injection
+    languages: [csharp]

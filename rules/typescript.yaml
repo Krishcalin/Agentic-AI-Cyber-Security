@@ -1,0 +1,344 @@
+rules:
+  # ── Injection ──────────────────────────────────────────────────────────
+  - id: typescript.xss.ts001
+    patterns:
+      - "innerHTML\\s*="
+    message: "DOM XSS — innerHTML assignment with potential user input"
+    severity: ERROR
+    cwe: "CWE-79"
+    owasp: "A03:2021"
+    category: xss
+    languages: [typescript]
+
+  - id: typescript.xss.ts002
+    patterns:
+      - "document\\.write\\("
+    message: "DOM XSS — document.write can inject arbitrary HTML"
+    severity: ERROR
+    cwe: "CWE-79"
+    owasp: "A03:2021"
+    category: xss
+    languages: [typescript]
+
+  - id: typescript.xss.ts003
+    patterns:
+      - "dangerouslySetInnerHTML"
+    message: "React XSS — dangerouslySetInnerHTML bypasses sanitization"
+    severity: WARNING
+    cwe: "CWE-79"
+    owasp: "A03:2021"
+    category: xss
+    languages: [typescript]
+
+  - id: typescript.injection.ts004
+    patterns:
+      - "eval\\s*\\("
+    message: "Code injection — eval() executes arbitrary code"
+    severity: ERROR
+    cwe: "CWE-94"
+    owasp: "A03:2021"
+    category: injection
+    languages: [typescript]
+
+  - id: typescript.injection.ts005
+    patterns:
+      - "new\\s+Function\\s*\\("
+    message: "Code injection — new Function() compiles and executes strings"
+    severity: ERROR
+    cwe: "CWE-94"
+    owasp: "A03:2021"
+    category: injection
+    languages: [typescript]
+
+  - id: typescript.injection.ts006
+    patterns:
+      - "\\$\\{.*\\}.*(?:exec|query|execute)"
+    message: "Template literal injection in database/command context"
+    severity: ERROR
+    cwe: "CWE-89"
+    owasp: "A03:2021"
+    category: injection
+    languages: [typescript]
+
+  # ── TypeScript-Specific ────────────────────────────────────────────────
+  - id: typescript.type_safety.ts007
+    patterns:
+      - "as\\s+any"
+    message: "Type assertion to 'any' bypasses TypeScript type safety"
+    severity: INFO
+    cwe: "CWE-704"
+    category: type_safety
+    languages: [typescript]
+
+  - id: typescript.type_safety.ts008
+    patterns:
+      - "@ts-ignore"
+    message: "ts-ignore suppresses type checking — may hide security issues"
+    severity: INFO
+    cwe: "CWE-704"
+    category: type_safety
+    languages: [typescript]
+
+  - id: typescript.type_safety.ts009
+    patterns:
+      - "!\\s*\\.\\s*\\w+"
+    message: "Non-null assertion operator may cause runtime errors"
+    severity: INFO
+    cwe: "CWE-476"
+    category: type_safety
+    languages: [typescript]
+
+  # ── Authentication & Session ───────────────────────────────────────────
+  - id: typescript.authentication.ts010
+    patterns:
+      - "jwt\\.sign\\(.*algorithm.*none"
+    message: "JWT with 'none' algorithm — tokens can be forged"
+    severity: ERROR
+    cwe: "CWE-347"
+    owasp: "A02:2021"
+    category: authentication
+    languages: [typescript]
+
+  - id: typescript.authentication.ts011
+    patterns:
+      - "jsonwebtoken.*expiresIn.*\\b(\\d{5,}|\\d+[yY])"
+    message: "JWT with excessive expiration time"
+    severity: WARNING
+    cwe: "CWE-613"
+    owasp: "A02:2021"
+    category: authentication
+    languages: [typescript]
+
+  - id: typescript.session.ts012
+    patterns:
+      - "cookie.*secure\\s*:\\s*false"
+    message: "Cookie without Secure flag — transmitted over HTTP"
+    severity: WARNING
+    cwe: "CWE-614"
+    owasp: "A02:2021"
+    category: session
+    languages: [typescript]
+
+  - id: typescript.session.ts013
+    patterns:
+      - "cookie.*httpOnly\\s*:\\s*false"
+    message: "Cookie without HttpOnly — accessible via JavaScript"
+    severity: WARNING
+    cwe: "CWE-1004"
+    owasp: "A02:2021"
+    category: session
+    languages: [typescript]
+
+  # ── Secrets & Credentials ──────────────────────────────────────────────
+  - id: typescript.secrets.ts014
+    patterns:
+      - "(password|secret|api_?key|token)\\s*[:=]\\s*['\"][^'\"]{8,}['\"]"
+    message: "Hardcoded credential or secret in source code"
+    severity: ERROR
+    cwe: "CWE-798"
+    owasp: "A02:2021"
+    category: secrets
+    languages: [typescript]
+
+  - id: typescript.secrets.ts015
+    patterns:
+      - "process\\.env\\.[A-Z_]+"
+    message: "Environment variable access — verify not logged or exposed"
+    severity: INFO
+    cwe: "CWE-532"
+    category: secrets
+    languages: [typescript]
+
+  # ── Network & Crypto ───────────────────────────────────────────────────
+  - id: typescript.crypto.ts016
+    patterns:
+      - "rejectUnauthorized\\s*:\\s*false"
+    message: "TLS certificate verification disabled — MITM risk"
+    severity: ERROR
+    cwe: "CWE-295"
+    owasp: "A02:2021"
+    category: crypto
+    languages: [typescript]
+
+  - id: typescript.crypto.ts017
+    patterns:
+      - "createHash\\s*\\(\\s*['\"]md5['\"]"
+    message: "MD5 hash — cryptographically broken, use SHA-256+"
+    severity: WARNING
+    cwe: "CWE-328"
+    owasp: "A02:2021"
+    category: crypto
+    languages: [typescript]
+
+  - id: typescript.crypto.ts018
+    patterns:
+      - "createHash\\s*\\(\\s*['\"]sha1['\"]"
+    message: "SHA-1 hash — deprecated, use SHA-256+"
+    severity: WARNING
+    cwe: "CWE-328"
+    owasp: "A02:2021"
+    category: crypto
+    languages: [typescript]
+
+  - id: typescript.network.ts019
+    patterns:
+      - "cors\\(\\s*\\)"
+    message: "CORS with default (permissive) configuration"
+    severity: WARNING
+    cwe: "CWE-942"
+    owasp: "A05:2021"
+    category: network
+    languages: [typescript]
+
+  - id: typescript.network.ts020
+    patterns:
+      - "Access-Control-Allow-Origin.*\\*"
+    message: "Wildcard CORS origin — allows any domain"
+    severity: WARNING
+    cwe: "CWE-942"
+    owasp: "A05:2021"
+    category: network
+    languages: [typescript]
+
+  # ── Prototype Pollution ────────────────────────────────────────────────
+  - id: typescript.injection.ts021
+    patterns:
+      - "__proto__"
+    message: "Prototype pollution — direct __proto__ access"
+    severity: ERROR
+    cwe: "CWE-1321"
+    owasp: "A03:2021"
+    category: injection
+    languages: [typescript]
+
+  - id: typescript.injection.ts022
+    patterns:
+      - "Object\\.assign\\(.*req\\.(body|query|params)"
+    message: "Prototype pollution via Object.assign with user input"
+    severity: ERROR
+    cwe: "CWE-1321"
+    owasp: "A03:2021"
+    category: injection
+    languages: [typescript]
+
+  - id: typescript.injection.ts023
+    patterns:
+      - "\\.\\.\\.req\\.(body|query|params)"
+    message: "Spread operator with user input — prototype pollution risk"
+    severity: WARNING
+    cwe: "CWE-1321"
+    owasp: "A03:2021"
+    category: injection
+    languages: [typescript]
+
+  # ── Path Traversal & File Ops ──────────────────────────────────────────
+  - id: typescript.path_traversal.ts024
+    patterns:
+      - "path\\.join\\(.*req\\."
+    message: "Path traversal — user input in file path construction"
+    severity: ERROR
+    cwe: "CWE-22"
+    owasp: "A01:2021"
+    category: path_traversal
+    languages: [typescript]
+
+  - id: typescript.path_traversal.ts025
+    patterns:
+      - "readFileSync\\(.*req\\."
+    message: "Arbitrary file read with user-controlled path"
+    severity: ERROR
+    cwe: "CWE-22"
+    owasp: "A01:2021"
+    category: path_traversal
+    languages: [typescript]
+
+  - id: typescript.path_traversal.ts026
+    patterns:
+      - "writeFileSync\\(.*req\\."
+    message: "Arbitrary file write with user-controlled path"
+    severity: ERROR
+    cwe: "CWE-22"
+    owasp: "A01:2021"
+    category: path_traversal
+    languages: [typescript]
+
+  # ── Deserialization ────────────────────────────────────────────────────
+  - id: typescript.deserialization.ts027
+    patterns:
+      - "JSON\\.parse\\(.*req\\."
+    message: "JSON deserialization of user input — validate schema"
+    severity: WARNING
+    cwe: "CWE-502"
+    owasp: "A08:2021"
+    category: deserialization
+    languages: [typescript]
+
+  - id: typescript.deserialization.ts028
+    patterns:
+      - "unserialize\\("
+    message: "Unsafe deserialization — remote code execution risk"
+    severity: ERROR
+    cwe: "CWE-502"
+    owasp: "A08:2021"
+    category: deserialization
+    languages: [typescript]
+
+  # ── Command Injection ──────────────────────────────────────────────────
+  - id: typescript.injection.ts029
+    patterns:
+      - "child_process.*exec\\("
+    message: "Command injection via child_process.exec — use execFile instead"
+    severity: ERROR
+    cwe: "CWE-78"
+    owasp: "A03:2021"
+    category: injection
+    languages: [typescript]
+
+  - id: typescript.injection.ts030
+    patterns:
+      - "execSync\\(.*\\$\\{"
+    message: "Command injection — template literal in execSync"
+    severity: ERROR
+    cwe: "CWE-78"
+    owasp: "A03:2021"
+    category: injection
+    languages: [typescript]
+
+  # ── Deno/Bun Specific ──────────────────────────────────────────────────
+  - id: typescript.injection.ts031
+    patterns:
+      - "Deno\\.run\\("
+    message: "Deno subprocess execution — validate command input"
+    severity: WARNING
+    cwe: "CWE-78"
+    category: injection
+    languages: [typescript]
+
+  - id: typescript.configuration.ts032
+    patterns:
+      - "--allow-all"
+    message: "Deno --allow-all flag disables all security sandbox restrictions"
+    severity: ERROR
+    cwe: "CWE-269"
+    category: configuration
+    languages: [typescript]
+
+  # ── Regex & ReDoS ──────────────────────────────────────────────────────
+  - id: typescript.injection.ts033
+    patterns:
+      - "new\\s+RegExp\\(.*req\\."
+    message: "ReDoS — user input in regex constructor"
+    severity: ERROR
+    cwe: "CWE-1333"
+    owasp: "A03:2021"
+    category: injection
+    languages: [typescript]
+
+  - id: typescript.injection.ts034
+    patterns:
+      - "\\(\\[\\^[^\\]]*\\]\\+\\)\\+"
+    message: "Potential ReDoS — nested quantifiers in regex"
+    severity: WARNING
+    cwe: "CWE-1333"
+    category: injection
+    languages: [typescript]

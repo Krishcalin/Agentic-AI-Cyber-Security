@@ -1,0 +1,282 @@
+rules:
+  # ── Command Injection ──────────────────────────────────────────────────
+  - id: shell.injection.sh001
+    patterns:
+      - "eval\\s+"
+    message: "eval executes arbitrary code — avoid with user input"
+    severity: ERROR
+    cwe: "CWE-78"
+    owasp: "A03:2021"
+    category: injection
+    languages: [shell, bash]
+
+  - id: shell.injection.sh002
+    patterns:
+      - "\\$\\(.*\\$\\{?[A-Z_]+\\}?.*\\)"
+    message: "Command substitution with variable — injection risk if unquoted"
+    severity: WARNING
+    cwe: "CWE-78"
+    category: injection
+    languages: [shell, bash]
+
+  - id: shell.injection.sh003
+    patterns:
+      - "curl\\s+.*\\|\\s*(bash|sh|zsh)"
+    message: "Download-and-execute pattern — pipe to shell is dangerous"
+    severity: ERROR
+    cwe: "CWE-78"
+    owasp: "A03:2021"
+    category: injection
+    languages: [shell, bash]
+
+  - id: shell.injection.sh004
+    patterns:
+      - "wget\\s+.*\\|\\s*(bash|sh|zsh)"
+    message: "Download-and-execute via wget pipe to shell"
+    severity: ERROR
+    cwe: "CWE-78"
+    owasp: "A03:2021"
+    category: injection
+    languages: [shell, bash]
+
+  - id: shell.injection.sh005
+    patterns:
+      - "\\bsource\\s+/dev/stdin"
+    message: "Sourcing stdin — arbitrary code execution risk"
+    severity: ERROR
+    cwe: "CWE-78"
+    category: injection
+    languages: [shell, bash]
+
+  # ── Quoting & Word Splitting ───────────────────────────────────────────
+  - id: shell.quoting.sh006
+    patterns:
+      - "\\$[A-Z_]+[^\"']"
+    message: "Unquoted variable — word splitting and globbing risk"
+    severity: WARNING
+    cwe: "CWE-78"
+    category: quoting
+    languages: [shell, bash]
+
+  - id: shell.quoting.sh007
+    patterns:
+      - "\\bfor\\s+\\w+\\s+in\\s+\\$\\("
+    message: "Unquoted command substitution in for loop — word splitting"
+    severity: WARNING
+    cwe: "CWE-78"
+    category: quoting
+    languages: [shell, bash]
+
+  - id: shell.quoting.sh008
+    patterns:
+      - "\\[ [^\"]*\\$[A-Z_]+ [^\"]*\\]"
+    message: "Unquoted variable in test — use [[ ]] or quote variables"
+    severity: WARNING
+    cwe: "CWE-78"
+    category: quoting
+    languages: [shell, bash]
+
+  # ── File Operations ────────────────────────────────────────────────────
+  - id: shell.destructive.sh009
+    patterns:
+      - "rm\\s+-rf\\s+/(?!tmp)"
+    message: "Recursive force delete from root — destructive"
+    severity: ERROR
+    cwe: "CWE-78"
+    category: destructive
+    languages: [shell, bash]
+
+  - id: shell.destructive.sh010
+    patterns:
+      - "rm\\s+-rf\\s+\"?\\$"
+    message: "rm -rf with variable — if empty, deletes from CWD"
+    severity: ERROR
+    cwe: "CWE-78"
+    category: destructive
+    languages: [shell, bash]
+
+  - id: shell.permissions.sh011
+    patterns:
+      - "chmod\\s+777"
+    message: "chmod 777 — world-writable permissions"
+    severity: ERROR
+    cwe: "CWE-732"
+    owasp: "A01:2021"
+    category: permissions
+    languages: [shell, bash]
+
+  - id: shell.permissions.sh012
+    patterns:
+      - "chmod\\s+666"
+    message: "chmod 666 — world-readable/writable file"
+    severity: WARNING
+    cwe: "CWE-732"
+    category: permissions
+    languages: [shell, bash]
+
+  - id: shell.permissions.sh013
+    patterns:
+      - "chmod\\s+\\+s"
+    message: "Setting SUID/SGID bit — privilege escalation risk"
+    severity: ERROR
+    cwe: "CWE-269"
+    category: permissions
+    languages: [shell, bash]
+
+  - id: shell.file_ops.sh014
+    patterns:
+      - "mktemp\\b"
+    message: "Verify mktemp usage — race conditions in temp file creation"
+    severity: INFO
+    cwe: "CWE-377"
+    category: file_ops
+    languages: [shell, bash]
+
+  # ── Secrets & Credentials ──────────────────────────────────────────────
+  - id: shell.secrets.sh015
+    patterns:
+      - "(PASSWORD|SECRET|API_KEY|TOKEN)\\s*=\\s*['\"][^'\"]{8,}['\"]"
+    message: "Hardcoded secret in shell script"
+    severity: ERROR
+    cwe: "CWE-798"
+    owasp: "A02:2021"
+    category: secrets
+    languages: [shell, bash]
+
+  - id: shell.secrets.sh016
+    patterns:
+      - "echo\\s+.*\\$(PASSWORD|SECRET|API_KEY|TOKEN)"
+    message: "Secret may be logged via echo"
+    severity: WARNING
+    cwe: "CWE-532"
+    category: secrets
+    languages: [shell, bash]
+
+  - id: shell.secrets.sh017
+    patterns:
+      - "curl\\s+.*-u\\s+\\w+:"
+    message: "Credentials in curl command — visible in process list"
+    severity: WARNING
+    cwe: "CWE-522"
+    category: secrets
+    languages: [shell, bash]
+
+  - id: shell.secrets.sh018
+    patterns:
+      - "mysql\\s+.*-p\\w+"
+    message: "MySQL password on command line — visible in process list"
+    severity: ERROR
+    cwe: "CWE-522"
+    category: secrets
+    languages: [shell, bash]
+
+  # ── Network Security ───────────────────────────────────────────────────
+  - id: shell.network.sh019
+    patterns:
+      - "curl\\s+.*--insecure"
+    message: "curl --insecure skips TLS verification — MITM risk"
+    severity: ERROR
+    cwe: "CWE-295"
+    category: network
+    languages: [shell, bash]
+
+  - id: shell.network.sh020
+    patterns:
+      - "curl\\s+.*-k\\b"
+    message: "curl -k skips certificate verification"
+    severity: ERROR
+    cwe: "CWE-295"
+    category: network
+    languages: [shell, bash]
+
+  - id: shell.network.sh021
+    patterns:
+      - "wget\\s+.*--no-check-certificate"
+    message: "wget without certificate check — MITM risk"
+    severity: ERROR
+    cwe: "CWE-295"
+    category: network
+    languages: [shell, bash]
+
+  - id: shell.network.sh022
+    patterns:
+      - "nc\\s+-[elp]"
+    message: "Netcat listener — reverse shell or backdoor pattern"
+    severity: ERROR
+    cwe: "CWE-78"
+    category: network
+    languages: [shell, bash]
+
+  - id: shell.network.sh023
+    patterns:
+      - "ncat\\s+-[elp]"
+    message: "Ncat listener — reverse shell pattern"
+    severity: ERROR
+    cwe: "CWE-78"
+    category: network
+    languages: [shell, bash]
+
+  # ── Privilege & Persistence ────────────────────────────────────────────
+  - id: shell.privilege.sh024
+    patterns:
+      - "echo.*>>\\s*/etc/sudoers"
+    message: "Modifying sudoers directly — use visudo"
+    severity: ERROR
+    cwe: "CWE-269"
+    category: privilege
+    languages: [shell, bash]
+
+  - id: shell.persistence.sh025
+    patterns:
+      - "crontab\\s+-"
+    message: "Crontab modification — verify not creating persistence"
+    severity: WARNING
+    cwe: "CWE-269"
+    category: persistence
+    languages: [shell, bash]
+
+  - id: shell.persistence.sh026
+    patterns:
+      - "echo.*>>\\s*~/.bashrc"
+    message: "Appending to .bashrc — persistence mechanism"
+    severity: WARNING
+    cwe: "CWE-269"
+    category: persistence
+    languages: [shell, bash]
+
+  - id: shell.persistence.sh027
+    patterns:
+      - "ssh-keygen.*-f.*authorized_keys"
+    message: "SSH authorized_keys manipulation — backdoor risk"
+    severity: ERROR
+    cwe: "CWE-269"
+    category: persistence
+    languages: [shell, bash]
+
+  # ── Error Handling ─────────────────────────────────────────────────────
+  - id: shell.error_handling.sh028
+    patterns:
+      - "set\\s+.*-e"
+    message: "set -e (errexit) — good practice for error handling"
+    severity: INFO
+    cwe: "CWE-754"
+    category: error_handling
+    languages: [shell, bash]
+
+  - id: shell.error_handling.sh029
+    patterns:
+      - "2>/dev/null"
+    message: "Silencing stderr — errors may be hidden"
+    severity: INFO
+    cwe: "CWE-754"
+    category: error_handling
+    languages: [shell, bash]
+
+  - id: shell.error_handling.sh030
+    patterns:
+      - "\\|\\|\\s*true"
+    message: "Suppressing command failures with || true"
+    severity: INFO
+    cwe: "CWE-754"
+    category: error_handling
+    languages: [shell, bash]

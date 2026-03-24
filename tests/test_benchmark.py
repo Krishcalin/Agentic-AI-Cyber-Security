@@ -31,7 +31,7 @@ EXPECTED = {
     "python_vulnerable.py": {
         "min_findings": 10,
         "expected_cwes": {"CWE-89", "CWE-78", "CWE-95", "CWE-502", "CWE-328", "CWE-798", "CWE-295"},
-        "expected_rules": ["sql", "command", "eval", "pickle", "md5", "password", "verify"],
+        "expected_rules": ["sql", "system", "eval", "pickle", "md5", "password", "verify"],
     },
     "javascript_vulnerable.js": {
         "min_findings": 8,

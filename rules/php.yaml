@@ -57,7 +57,7 @@ rules:
     message: "preg_replace with /e modifier — code execution"
     cwe: CWE-95
     patterns:
-      - 'preg_replace\s*\(\s*["\'].*\/e["\']'
+      - 'preg_replace\s*\(\s*["''].*\/e["'']'
     confidence: high
 
   - id: php.injection.assert
@@ -132,9 +132,9 @@ rules:
     message: "Hardcoded credentials"
     cwe: CWE-798
     patterns:
-      - '\$password\s*=\s*["\'][^"\']{4,}["\']'
-      - '\$secret\s*=\s*["\'][^"\']{4,}["\']'
-      - '\$db_pass\s*=\s*["\'][^"\']{4,}["\']'
+      - '\$password\s*=\s*["''][^"'']{4,}["'']'
+      - '\$secret\s*=\s*["''][^"'']{4,}["'']'
+      - '\$db_pass\s*=\s*["''][^"'']{4,}["'']'
     confidence: medium
 
   # File Upload

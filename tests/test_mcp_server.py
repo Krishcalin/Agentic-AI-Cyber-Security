@@ -29,7 +29,7 @@ def server() -> MCPServer:
 class TestSchemas:
     def test_tool_count(self):
         tools = get_tool_definitions()
-        assert len(tools) == 11
+        assert len(tools) == 20
 
     def test_all_tools_have_names(self):
         tools = get_tool_definitions()
@@ -45,6 +45,9 @@ class TestSchemas:
             "scan_security", "fix_security", "check_package", "scan_packages",
             "scan_agent_prompt", "scan_agent_action", "scan_project",
             "scan_git_diff", "scan_dockerfile", "scan_iac", "scanner_health",
+            "semantic_review", "audit_mcp_server", "scan_rag_document",
+            "analyze_tool_response", "detect_exploit_chains", "evaluate_policy",
+            "generate_redteam", "analyze_dependencies", "monitor_session",
         }
         assert names == expected
 
@@ -277,7 +280,7 @@ class TestMCPProtocol:
         })
         assert response["id"] == 2
         tools = response["result"]["tools"]
-        assert len(tools) == 11
+        assert len(tools) == 20
 
     def test_tools_call(self, server: MCPServer):
         response = server._handle_request({

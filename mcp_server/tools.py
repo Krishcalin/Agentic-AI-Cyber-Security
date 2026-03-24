@@ -1,4 +1,4 @@
-"""MCP tool handlers — implements all 15 scanner tools."""
+"""MCP tool handlers — implements all 30 scanner tools."""
 
 from __future__ import annotations
 
@@ -8,14 +8,28 @@ from typing import Any
 
 import structlog
 
+from core.atlas_mapper import ATLASMapper
+from core.chain_detector import ChainDetector
+from core.clickbait_detector import ClickbaitDetector
+from core.dependency_analyzer import DependencyAnalyzer
 from core.engine import ScanEngine
 from core.fix_generator import FixGenerator
 from core.grader import calculate_grade, calculate_score, grade_label
+from core.inference_monitor import InferenceMonitor
+from core.llm_worm_detector import LLMWormDetector
 from core.mcp_auditor import MCPAuditor
+from core.model_scanner import ModelScanner
 from core.package_checker import PackageChecker
+from core.policy_engine import PolicyEngine
 from core.prompt_scanner import PromptScanner
 from core.rag_scanner import RAGScanner
+from core.redteam_generator import RedTeamGenerator
+from core.runtime_monitor import RuntimeMonitor
 from core.semantic_reviewer import SemanticReviewer
+from core.owasp_llm_mapper import OWASPLLMMapper
+from core.sandbox_evaluator import SandboxEvaluator
+from core.sbom_generator import SBOMGenerator
+from core.secrets_scanner import SecretsScanner
 from core.tool_response_analyzer import ToolResponseAnalyzer
 
 log = structlog.get_logger("mcp_tools")
@@ -33,6 +47,21 @@ class ToolHandlers:
         self.mcp_auditor = MCPAuditor()
         self.rag_scanner = RAGScanner()
         self.response_analyzer = ToolResponseAnalyzer()
+        self.chain_detector = ChainDetector()
+        self.policy_engine = PolicyEngine()
+        self.policy_engine.load_builtin_policies()
+        self.redteam_gen = RedTeamGenerator()
+        self.dep_analyzer = DependencyAnalyzer()
+        self.runtime_monitor = RuntimeMonitor()
+        self.atlas_mapper = ATLASMapper()
+        self.model_scanner = ModelScanner()
+        self.worm_detector = LLMWormDetector()
+        self.inference_monitor = InferenceMonitor()
+        self.clickbait_detector = ClickbaitDetector()
+        self.owasp_mapper = OWASPLLMMapper()
+        self.sandbox_evaluator = SandboxEvaluator()
+        self.secrets_scanner = SecretsScanner()
+        self.sbom_generator = SBOMGenerator()
         self.semantic_reviewer: SemanticReviewer | None = None  # Lazy init (needs API key)
 
     def _get_reviewer(self, provider: str = "claude") -> SemanticReviewer:
@@ -58,6 +87,20 @@ class ToolHandlers:
             "audit_mcp_server": self._audit_mcp_server,
             "scan_rag_document": self._scan_rag_document,
             "analyze_tool_response": self._analyze_tool_response,
+            "detect_exploit_chains": self._detect_exploit_chains,
+            "evaluate_policy": self._evaluate_policy,
+            "generate_redteam": self._generate_redteam,
+            "analyze_dependencies": self._analyze_dependencies,
+            "monitor_session": self._monitor_session,
+            "map_atlas": self._map_atlas,
+            "scan_model": self._scan_model,
+            "detect_llm_worm": self._detect_llm_worm,
+            "monitor_inference": self._monitor_inference,
+            "detect_clickbait": self._detect_clickbait,
+            "map_owasp_llm": self._map_owasp_llm,
+            "evaluate_sandbox": self._evaluate_sandbox,
+            "scan_secrets": self._scan_secrets,
+            "generate_sbom": self._generate_sbom,
         }
 
         handler = handlers.get(tool_name)
@@ -380,8 +423,20 @@ class ToolHandlers:
             "status": "healthy",
             "rules_loaded": self.engine.rules_loaded,
             "prompt_patterns": self.prompt_scanner.pattern_count,
-            "engines": ["pattern_matcher", "ast_analyzer", "taint_tracker", "package_checker", "prompt_scanner", "fix_generator", "semantic_reviewer", "mcp_auditor", "rag_scanner", "tool_response_analyzer"],
-            "supported_languages": ["python", "javascript", "typescript", "java", "go", "php", "ruby", "c", "cpp", "dockerfile", "terraform", "kubernetes"],
+            "engines": [
+                "pattern_matcher", "ast_analyzer", "taint_tracker", "package_checker",
+                "prompt_scanner", "fix_generator", "semantic_reviewer",
+                "mcp_auditor", "rag_scanner", "tool_response_analyzer",
+                "chain_detector", "policy_engine", "runtime_monitor",
+                "redteam_generator", "dependency_analyzer",
+                "atlas_mapper", "model_scanner", "llm_worm_detector",
+                "inference_monitor", "clickbait_detector",
+            ],
+            "supported_languages": [
+                "python", "javascript", "typescript", "java", "go", "php",
+                "ruby", "c", "cpp", "rust", "swift", "kotlin",
+                "shell", "dockerfile", "terraform", "kubernetes",
+            ],
         }
 
     # ── semantic_review ────────────────────────────────────────────────
@@ -507,3 +562,261 @@ class ToolHandlers:
             ],
             "sanitized_output": result.sanitized_output[:1000] if not result.is_safe else "",
         }
+
+    # ── detect_exploit_chains ─────────────────────────────────────────
+
+    def _detect_exploit_chains(self, args: dict[str, Any]) -> dict[str, Any]:
+        actions = args.get("actions", [])
+        session_id = args.get("session_id", "mcp")
+
+        if not actions:
+            return {"error": "Provide 'actions' array"}
+
+        detector = ChainDetector()  # Fresh detector per request
+        for action in actions:
+            detector.record_action(
+                session_id=session_id,
+                tool_name=action.get("tool", "unknown"),
+                target=action.get("target", ""),
+            )
+
+        result = detector.check()
+        return result.to_dict()
+
+    # ── evaluate_policy ───────────────────────────────────────────────
+
+    def _evaluate_policy(self, args: dict[str, Any]) -> dict[str, Any]:
+        scope = args.get("scope", "command")
+        target = args.get("target", "")
+
+        if not target:
+            return {"error": "Provide 'target' to evaluate"}
+
+        result = self.policy_engine.evaluate(scope, target)
+        return result.to_dict()
+
+    # ── generate_redteam ──────────────────────────────────────────────
+
+    def _generate_redteam(self, args: dict[str, Any]) -> dict[str, Any]:
+        category = args.get("category")
+        difficulty = args.get("difficulty")
+        run_benchmark = args.get("benchmark", False)
+
+        if category:
+            suite = self.redteam_gen.generate_by_category(category)
+        elif difficulty:
+            suite = self.redteam_gen.generate_by_difficulty(difficulty)
+        else:
+            suite = self.redteam_gen.generate_full_suite()
+
+        output = {
+            "name": suite.name,
+            "total_tests": suite.total,
+            "by_category": suite.by_category,
+            "by_difficulty": suite.by_difficulty,
+        }
+
+        if run_benchmark:
+            output["benchmark"] = self.redteam_gen.benchmark(
+                suite,
+                prompt_scanner=self.prompt_scanner,
+                chain_detector=self.chain_detector,
+            )
+
+        # Include test summaries (not full payloads to keep response manageable)
+        output["tests"] = [
+            {"test_id": t.test_id, "name": t.name, "category": t.category.value,
+             "difficulty": t.difficulty.value, "expected_detection": t.expected_detection}
+            for t in suite.tests
+        ]
+
+        return output
+
+    # ── analyze_dependencies ──────────────────────────────────────────
+
+    def _analyze_dependencies(self, args: dict[str, Any]) -> dict[str, Any]:
+        file_path = args.get("file_path")
+        directory = args.get("directory")
+
+        if file_path:
+            result = self.dep_analyzer.analyze_file(file_path)
+            return result.to_dict()
+        elif directory:
+            results = self.dep_analyzer.analyze_project(directory)
+            return {
+                "directory": directory,
+                "files_analyzed": len(results),
+                "results": [r.to_dict() for r in results],
+            }
+        else:
+            return {"error": "Provide 'file_path' or 'directory'"}
+
+    # ── monitor_session ───────────────────────────────────────────────
+
+    def _monitor_session(self, args: dict[str, Any]) -> dict[str, Any]:
+        session_id = args.get("session_id", "default")
+        action_type = args.get("action_type", "unknown")
+        target = args.get("target", "")
+        tool_name = args.get("tool_name", action_type)
+
+        alert = self.runtime_monitor.record(
+            session_id=session_id,
+            action_type=action_type,
+            target=target,
+            tool_name=tool_name,
+        )
+
+        profile = self.runtime_monitor.get_session_profile(session_id)
+        result: dict[str, Any] = {
+            "session_id": session_id,
+            "action_recorded": True,
+            "alert": None,
+        }
+
+        if profile:
+            result["risk_score"] = round(profile.risk_score, 2)
+            result["total_actions"] = profile.total_actions
+
+        if alert:
+            result["alert"] = alert.to_dict()
+
+        return result
+
+    # ── map_atlas ─────────────────────────────────────────────────────
+
+    def _map_atlas(self, args: dict[str, Any]) -> dict[str, Any]:
+        findings = args.get("findings", [])
+        generate_layer = args.get("generate_layer", False)
+
+        if not findings:
+            return {"error": "Provide 'findings' array"}
+
+        result = self.atlas_mapper.map_findings(findings)
+        output = result.to_dict()
+
+        if generate_layer:
+            output["navigator_layer"] = self.atlas_mapper.generate_navigator_layer(findings)
+
+        return output
+
+    # ── scan_model ────────────────────────────────────────────────────
+
+    def _scan_model(self, args: dict[str, Any]) -> dict[str, Any]:
+        file_path = args.get("file_path")
+        code = args.get("code")
+
+        if file_path:
+            result = self.model_scanner.scan_file(file_path)
+            return result.to_dict()
+        elif code:
+            findings = self.model_scanner.scan_code_for_unsafe_loading(code)
+            return {
+                "findings_count": len(findings),
+                "findings": [f.to_dict() for f in findings],
+            }
+        else:
+            return {"error": "Provide 'file_path' or 'code'"}
+
+    # ── detect_llm_worm ──────────────────────────────────────────────
+
+    def _detect_llm_worm(self, args: dict[str, Any]) -> dict[str, Any]:
+        text = args.get("text", "")
+        original_prompt = args.get("original_prompt")
+        llm_output = args.get("llm_output")
+
+        if original_prompt and llm_output:
+            result = self.worm_detector.check_output_for_replication(original_prompt, llm_output)
+        elif text:
+            result = self.worm_detector.scan_text(text)
+        else:
+            return {"error": "Provide 'text' or both 'original_prompt' and 'llm_output'"}
+
+        return result.to_dict()
+
+    # ── monitor_inference ─────────────────────────────────────────────
+
+    def _monitor_inference(self, args: dict[str, Any]) -> dict[str, Any]:
+        request_id = args.get("request_id", "unknown")
+        source_ip = args.get("source_ip", "0.0.0.0")
+        model_id = args.get("model_id", "unknown")
+        input_tokens = args.get("input_tokens", 0)
+        output_tokens = args.get("output_tokens", 0)
+
+        alert = self.inference_monitor.record_request(
+            request_id=request_id, source_ip=source_ip, model_id=model_id,
+            input_tokens=input_tokens, output_tokens=output_tokens,
+        )
+
+        profile = self.inference_monitor.get_profile(source_ip)
+        result: dict[str, Any] = {
+            "recorded": True,
+            "alert": alert.to_dict() if alert else None,
+        }
+        if profile:
+            result["profile"] = profile.to_dict()
+
+        return result
+
+    # ── detect_clickbait ──────────────────────────────────────────────
+
+    def _detect_clickbait(self, args: dict[str, Any]) -> dict[str, Any]:
+        content = args.get("content", "")
+        content_type = args.get("content_type", "auto")
+
+        if not content:
+            return {"error": "Provide 'content' to scan"}
+
+        result = self.clickbait_detector.scan_content(content, content_type)
+        return result.to_dict()
+
+    # ── map_owasp_llm ─────────────────────────────────────────────────
+
+    def _map_owasp_llm(self, args: dict[str, Any]) -> dict[str, Any]:
+        findings = args.get("findings", [])
+        compliance = args.get("compliance", False)
+
+        if not findings:
+            return {"error": "Provide 'findings' array"}
+
+        if compliance:
+            return self.owasp_mapper.generate_compliance_report(findings)
+        return self.owasp_mapper.map_findings(findings).to_dict()
+
+    # ── evaluate_sandbox ──────────────────────────────────────────────
+
+    def _evaluate_sandbox(self, args: dict[str, Any]) -> dict[str, Any]:
+        config = args.get("config", args)
+        return self.sandbox_evaluator.evaluate_from_dict(config).to_dict()
+
+    # ── scan_secrets ──────────────────────────────────────────────────
+
+    def _scan_secrets(self, args: dict[str, Any]) -> dict[str, Any]:
+        file_path = args.get("file_path")
+        content = args.get("content")
+        directory = args.get("directory")
+
+        if file_path:
+            return self.secrets_scanner.scan_file(file_path).to_dict()
+        elif content:
+            return self.secrets_scanner.scan_content(content).to_dict()
+        elif directory:
+            results = self.secrets_scanner.scan_directory(directory)
+            return {
+                "directory": directory,
+                "files_with_secrets": len(results),
+                "total_secrets": sum(r.count for r in results),
+                "results": [r.to_dict() for r in results],
+            }
+        return {"error": "Provide 'file_path', 'content', or 'directory'"}
+
+    # ── generate_sbom ─────────────────────────────────────────────────
+
+    def _generate_sbom(self, args: dict[str, Any]) -> dict[str, Any]:
+        file_path = args.get("file_path")
+        directory = args.get("directory")
+
+        if directory:
+            return self.sbom_generator.generate_project(directory)
+        elif file_path:
+            return self.sbom_generator.generate_file(file_path)
+        return {"error": "Provide 'file_path' or 'directory'"}

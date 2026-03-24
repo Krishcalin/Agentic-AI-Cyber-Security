@@ -1,0 +1,287 @@
+rules:
+  # ── SQL Injection ──────────────────────────────────────────────────────
+  - id: kotlin.injection.kt001
+    patterns:
+      - "rawQuery\\(.*\\$"
+    message: "SQL injection — string interpolation in rawQuery"
+    severity: ERROR
+    cwe: "CWE-89"
+    owasp: "A03:2021"
+    category: injection
+    languages: [kotlin]
+
+  - id: kotlin.injection.kt002
+    patterns:
+      - "execSQL\\(.*\\$"
+    message: "SQL injection — string interpolation in execSQL"
+    severity: ERROR
+    cwe: "CWE-89"
+    owasp: "A03:2021"
+    category: injection
+    languages: [kotlin]
+
+  - id: kotlin.injection.kt003
+    patterns:
+      - "createQuery\\(.*\\$"
+    message: "SQL injection via string interpolation in JPA query"
+    severity: ERROR
+    cwe: "CWE-89"
+    owasp: "A03:2021"
+    category: injection
+    languages: [kotlin]
+
+  # ── Command & Code Injection ───────────────────────────────────────────
+  - id: kotlin.injection.kt004
+    patterns:
+      - "Runtime\\.getRuntime\\(\\)\\.exec\\("
+    message: "Command injection risk — use ProcessBuilder with argument list"
+    severity: ERROR
+    cwe: "CWE-78"
+    owasp: "A03:2021"
+    category: injection
+    languages: [kotlin]
+
+  - id: kotlin.injection.kt005
+    patterns:
+      - "ProcessBuilder\\(.*\\$"
+    message: "Command injection — interpolated string in ProcessBuilder"
+    severity: WARNING
+    cwe: "CWE-78"
+    category: injection
+    languages: [kotlin]
+
+  - id: kotlin.xss.kt006
+    patterns:
+      - "\\.loadUrl\\(.*javascript:"
+    message: "JavaScript injection via loadUrl in WebView"
+    severity: ERROR
+    cwe: "CWE-79"
+    owasp: "A03:2021"
+    category: xss
+    languages: [kotlin]
+
+  - id: kotlin.xss.kt007
+    patterns:
+      - "evaluateJavascript\\("
+    message: "JavaScript execution in WebView — validate input"
+    severity: WARNING
+    cwe: "CWE-79"
+    category: xss
+    languages: [kotlin]
+
+  # ── Android-Specific ───────────────────────────────────────────────────
+  - id: kotlin.android.kt008
+    patterns:
+      - "setJavaScriptEnabled\\(true\\)"
+    message: "JavaScript enabled in WebView — XSS and injection risk"
+    severity: WARNING
+    cwe: "CWE-79"
+    category: android
+    languages: [kotlin]
+
+  - id: kotlin.android.kt009
+    patterns:
+      - "setAllowFileAccess\\(true\\)"
+    message: "WebView file access enabled — local file theft risk"
+    severity: ERROR
+    cwe: "CWE-200"
+    category: android
+    languages: [kotlin]
+
+  - id: kotlin.android.kt010
+    patterns:
+      - "addJavascriptInterface\\("
+    message: "WebView JavaScript interface — code execution risk on API < 17"
+    severity: ERROR
+    cwe: "CWE-749"
+    category: android
+    languages: [kotlin]
+
+  - id: kotlin.android.kt011
+    patterns:
+      - "MODE_WORLD_READABLE"
+    message: "World-readable file mode — data exposure risk"
+    severity: ERROR
+    cwe: "CWE-732"
+    category: android
+    languages: [kotlin]
+
+  - id: kotlin.android.kt012
+    patterns:
+      - "MODE_WORLD_WRITEABLE"
+    message: "World-writable file mode — data tampering risk"
+    severity: ERROR
+    cwe: "CWE-732"
+    category: android
+    languages: [kotlin]
+
+  - id: kotlin.android.kt013
+    patterns:
+      - "exported\\s*=\\s*\"?true"
+    message: "Exported component — accessible by other apps"
+    severity: WARNING
+    cwe: "CWE-926"
+    category: android
+    languages: [kotlin]
+
+  - id: kotlin.android.kt014
+    patterns:
+      - "android:debuggable\\s*=\\s*\"true\""
+    message: "Debuggable flag enabled — must be false in production"
+    severity: ERROR
+    cwe: "CWE-489"
+    category: android
+    languages: [kotlin]
+
+  # ── Cryptography ───────────────────────────────────────────────────────
+  - id: kotlin.crypto.kt015
+    patterns:
+      - "MessageDigest\\.getInstance\\(.*MD5"
+    message: "MD5 hash — cryptographically broken"
+    severity: WARNING
+    cwe: "CWE-328"
+    category: crypto
+    languages: [kotlin]
+
+  - id: kotlin.crypto.kt016
+    patterns:
+      - "MessageDigest\\.getInstance\\(.*SHA-1"
+    message: "SHA-1 hash — deprecated for security use"
+    severity: WARNING
+    cwe: "CWE-328"
+    category: crypto
+    languages: [kotlin]
+
+  - id: kotlin.crypto.kt017
+    patterns:
+      - "SecretKeySpec\\(.*\"AES\""
+    message: "Static AES key — verify key is not hardcoded"
+    severity: WARNING
+    cwe: "CWE-321"
+    category: crypto
+    languages: [kotlin]
+
+  - id: kotlin.crypto.kt018
+    patterns:
+      - "Cipher\\.getInstance\\(\"AES/ECB"
+    message: "AES ECB mode — patterns visible, use CBC or GCM"
+    severity: ERROR
+    cwe: "CWE-327"
+    category: crypto
+    languages: [kotlin]
+
+  - id: kotlin.crypto.kt019
+    patterns:
+      - "setHostnameVerifier.*ALLOW_ALL"
+    message: "Hostname verification disabled — MITM risk"
+    severity: ERROR
+    cwe: "CWE-295"
+    category: crypto
+    languages: [kotlin]
+
+  - id: kotlin.crypto.kt020
+    patterns:
+      - "trustAllCerts|TrustAll|InsecureTrust"
+    message: "Trust all certificates — disables TLS verification"
+    severity: ERROR
+    cwe: "CWE-295"
+    owasp: "A02:2021"
+    category: crypto
+    languages: [kotlin]
+
+  # ── Secrets & Data Storage ─────────────────────────────────────────────
+  - id: kotlin.secrets.kt021
+    patterns:
+      - "(password|secret|apiKey|token)\\s*=\\s*\"[^\"]{8,}\""
+    message: "Hardcoded credential in Kotlin source"
+    severity: ERROR
+    cwe: "CWE-798"
+    owasp: "A02:2021"
+    category: secrets
+    languages: [kotlin]
+
+  - id: kotlin.secrets.kt022
+    patterns:
+      - "SharedPreferences.*password"
+    message: "Storing password in SharedPreferences — not encrypted"
+    severity: ERROR
+    cwe: "CWE-312"
+    category: secrets
+    languages: [kotlin]
+
+  - id: kotlin.secrets.kt023
+    patterns:
+      - "SharedPreferences.*token"
+    message: "Storing token in SharedPreferences — use EncryptedSharedPreferences"
+    severity: WARNING
+    cwe: "CWE-312"
+    category: secrets
+    languages: [kotlin]
+
+  - id: kotlin.logging.kt024
+    patterns:
+      - "Log\\.(d|v|i)\\(.*password"
+    message: "Logging password — remove before production"
+    severity: ERROR
+    cwe: "CWE-532"
+    category: logging
+    languages: [kotlin]
+
+  # ── Network ────────────────────────────────────────────────────────────
+  - id: kotlin.network.kt025
+    patterns:
+      - "cleartext.*true|usesCleartextTraffic.*true"
+    message: "Cleartext traffic enabled — data transmitted unencrypted"
+    severity: ERROR
+    cwe: "CWE-319"
+    owasp: "A02:2021"
+    category: network
+    languages: [kotlin]
+
+  - id: kotlin.network.kt026
+    patterns:
+      - "http://"
+    message: "Hardcoded HTTP URL — use HTTPS"
+    severity: WARNING
+    cwe: "CWE-319"
+    category: network
+    languages: [kotlin]
+
+  # ── Deserialization ────────────────────────────────────────────────────
+  - id: kotlin.deserialization.kt027
+    patterns:
+      - "ObjectInputStream\\("
+    message: "Java deserialization — remote code execution risk"
+    severity: ERROR
+    cwe: "CWE-502"
+    owasp: "A08:2021"
+    category: deserialization
+    languages: [kotlin]
+
+  - id: kotlin.deserialization.kt028
+    patterns:
+      - "readObject\\(\\)"
+    message: "Object deserialization — validate input source"
+    severity: WARNING
+    cwe: "CWE-502"
+    category: deserialization
+    languages: [kotlin]
+
+  # ── Intent & IPC ───────────────────────────────────────────────────────
+  - id: kotlin.android.kt029
+    patterns:
+      - "getStringExtra\\(.*\\)!!|getStringExtra\\(.*\\)\\?"
+    message: "Intent extra used without validation — injection risk"
+    severity: WARNING
+    cwe: "CWE-20"
+    category: android
+    languages: [kotlin]
+
+  - id: kotlin.android.kt030
+    patterns:
+      - "sendBroadcast\\("
+    message: "Unprotected broadcast — use LocalBroadcastManager or permissions"
+    severity: WARNING
+    cwe: "CWE-927"
+    category: android
+    languages: [kotlin]

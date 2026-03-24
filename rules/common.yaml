@@ -22,9 +22,9 @@ rules:
     message: "Password string detected in source code"
     cwe: CWE-798
     patterns:
-      - 'PASSWORD\s*[:=]\s*["\'][^"\']{4,}["\']'
-      - 'DB_PASSWORD\s*[:=]\s*["\'][^"\']{4,}["\']'
-      - 'DATABASE_URL\s*[:=]\s*["\'].*:.*@'
+      - 'PASSWORD\s*[:=]\s*["''][^"'']{4,}["'']'
+      - 'DB_PASSWORD\s*[:=]\s*["''][^"'']{4,}["'']'
+      - 'DATABASE_URL\s*[:=]\s*["''].*:.*@'
     confidence: medium
 
   - id: common.secrets.connection-string
