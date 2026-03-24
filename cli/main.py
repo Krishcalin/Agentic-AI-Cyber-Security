@@ -583,6 +583,420 @@ def list_rules(language: str | None, rules_dir: str) -> None:
     console.print(table)
 
 
+@cli.command(name="detect-chains")
+@click.option("--actions", "-a", required=True,
+              help="JSON file containing action sequence [{tool, target}, ...]")
+@click.option("--format", "-o", "output_format", default="terminal",
+              type=click.Choice(["terminal", "json"]))
+def detect_chains(actions: str, output_format: str) -> None:
+    """Detect multi-step exploit chains in agent action sequences."""
+    from rich.table import Table
+    from core.chain_detector import ChainDetector
+
+    path = Path(actions)
+    if not path.exists():
+        console.print(f"[red]File not found: {actions}[/]")
+        sys.exit(1)
+
+    action_list = json.loads(path.read_text(encoding="utf-8"))
+    detector = ChainDetector()
+
+    for action in action_list:
+        detector.record_action(
+            session_id="cli",
+            tool_name=action.get("tool", "unknown"),
+            target=action.get("target", ""),
+        )
+
+    result = detector.analyze("cli")
+
+    if output_format == "json":
+        console.print(json.dumps(result.to_dict(), indent=2))
+        return
+
+    if result.is_safe:
+        console.print("[green]No exploit chains detected.[/]")
+    else:
+        table = Table(title=f"Exploit Chains Detected ({len(result.chains_detected)})")
+        table.add_column("Chain", style="cyan")
+        table.add_column("Severity")
+        table.add_column("Confidence")
+        table.add_column("MITRE")
+        table.add_column("Description", ratio=1)
+
+        sev_colors = {"critical": "red", "high": "yellow", "medium": "cyan", "low": "dim"}
+        for chain in result.chains_detected:
+            color = sev_colors.get(chain.severity, "white")
+            table.add_row(
+                chain.chain.name,
+                f"[{color}]{chain.severity.upper()}[/]",
+                f"{chain.confidence:.0%}",
+                ", ".join(chain.chain.mitre_techniques),
+                chain.chain.description[:80],
+            )
+
+        console.print(table)
+
+    sys.exit(0 if result.is_safe else 1)
+
+
+@cli.command(name="check-policy")
+@click.option("--scope", "-s", required=True,
+              type=click.Choice(["command", "file_read", "file_write", "network", "package"]),
+              help="Action scope")
+@click.option("--target", "-t", required=True, help="Action target to evaluate")
+@click.option("--policy-file", default=None, help="Custom policy YAML file")
+def check_policy(scope: str, target: str, policy_file: str | None) -> None:
+    """Evaluate an action against security policies."""
+    from core.policy_engine import PolicyEngine
+
+    engine = PolicyEngine()
+    engine.load_builtin_policies()
+
+    if policy_file:
+        engine.load_policy_file(policy_file)
+
+    result = engine.evaluate(scope, target)
+
+    colors = {"allow": "green", "deny": "red", "warn": "yellow", "audit": "cyan"}
+    color = colors.get(result.decision.value, "white")
+
+    console.print(f"Decision: [{color}]{result.decision.value.upper()}[/]")
+    if result.rule_id:
+        console.print(f"Rule: {result.rule_id} — {result.rule_name}")
+    console.print(f"Reason: {result.reason}")
+
+    sys.exit(0 if result.decision.value in ("allow", "audit") else 1)
+
+
+@cli.command(name="redteam")
+@click.option("--category", "-c", default=None,
+              type=click.Choice(["prompt_injection", "tool_abuse", "evasion",
+                                 "supply_chain", "mcp_poisoning", "rag_injection"]),
+              help="Generate tests for specific category only")
+@click.option("--difficulty", "-d", default=None,
+              type=click.Choice(["easy", "medium", "hard", "expert"]),
+              help="Filter by difficulty level")
+@click.option("--benchmark", is_flag=True, help="Run benchmark against built-in scanners")
+@click.option("--format", "-o", "output_format", default="terminal",
+              type=click.Choice(["terminal", "json"]))
+def redteam(category: str | None, difficulty: str | None, benchmark: bool,
+            output_format: str) -> None:
+    """Generate adversarial red team test suite for agent security."""
+    from rich.table import Table
+    from core.redteam_generator import RedTeamGenerator
+
+    gen = RedTeamGenerator()
+
+    if category:
+        suite = gen.generate_by_category(category)
+    elif difficulty:
+        suite = gen.generate_by_difficulty(difficulty)
+    else:
+        suite = gen.generate_full_suite()
+
+    if output_format == "json":
+        output = suite.to_dict()
+        if benchmark:
+            from core.prompt_scanner import PromptScanner
+            from core.chain_detector import ChainDetector
+            scanner = PromptScanner(rules_path="rules/prompt_injection.yaml")
+            detector = ChainDetector()
+            output["benchmark"] = gen.benchmark(suite, prompt_scanner=scanner, chain_detector=detector)
+        console.print(json.dumps(output, indent=2))
+        return
+
+    console.print(f"\n[bold]Red Team Suite: {suite.name}[/]")
+    console.print(f"Total tests: {suite.total}")
+    console.print(f"By category: {suite.by_category}")
+    console.print(f"By difficulty: {suite.by_difficulty}")
+
+    if benchmark:
+        from core.prompt_scanner import PromptScanner
+        from core.chain_detector import ChainDetector
+        scanner = PromptScanner(rules_path="rules/prompt_injection.yaml")
+        detector = ChainDetector()
+        results = gen.benchmark(suite, prompt_scanner=scanner, chain_detector=detector)
+
+        console.print(f"\n[bold]Benchmark Results:[/]")
+        console.print(f"Detection rate: [green]{results['detection_rate']}%[/]")
+        console.print(f"Miss rate: [red]{results['miss_rate']}%[/]")
+        console.print(f"False positive rate: [yellow]{results['false_positive_rate']}%[/]")
+
+        table = Table(title="Results by Category")
+        table.add_column("Category")
+        table.add_column("Total")
+        table.add_column("Detected")
+        table.add_column("Missed")
+        for cat, stats in results["by_category"].items():
+            table.add_row(cat, str(stats["total"]), str(stats["detected"]), str(stats["missed"]))
+        console.print(table)
+
+
+@cli.command(name="analyze-deps")
+@click.option("--file", "-f", "file_path", default=None, help="Dependency file to analyze")
+@click.option("--project", "-p", "project_dir", default=None, help="Project directory to scan")
+@click.option("--format", "-o", "output_format", default="terminal",
+              type=click.Choice(["terminal", "json"]))
+def analyze_deps(file_path: str | None, project_dir: str | None, output_format: str) -> None:
+    """Analyze dependencies for supply chain risks."""
+    from rich.table import Table
+    from core.dependency_analyzer import DependencyAnalyzer
+
+    if not file_path and not project_dir:
+        console.print("[red]Error: specify --file or --project[/]")
+        sys.exit(1)
+
+    analyzer = DependencyAnalyzer()
+
+    if file_path:
+        results = [analyzer.analyze_file(file_path)]
+    else:
+        results = analyzer.analyze_project(project_dir)
+
+    if not results:
+        console.print("[yellow]No dependency files found.[/]")
+        return
+
+    if output_format == "json":
+        output = [r.to_dict() for r in results]
+        console.print(json.dumps(output, indent=2))
+        return
+
+    for result in results:
+        console.print(f"\n[bold]{result.file_path}[/] ({result.source.value})")
+        console.print(f"Dependencies: {result.total_dependencies} "
+                      f"(direct: {result.direct_count}, dev: {result.dev_count})")
+        console.print(f"Risk level: {result.risk_level}")
+
+        if result.findings:
+            table = Table(title=f"Findings ({result.finding_count})")
+            table.add_column("ID", style="cyan")
+            table.add_column("Risk")
+            table.add_column("Package")
+            table.add_column("Category")
+            table.add_column("Title", ratio=1)
+
+            sev_colors = {"critical": "red", "high": "yellow", "medium": "cyan", "low": "dim"}
+            for f in result.findings:
+                color = sev_colors.get(f.risk, "white")
+                table.add_row(f.finding_id, f"[{color}]{f.risk.upper()}[/]",
+                              f.dependency, f.category, f.title[:60])
+            console.print(table)
+        else:
+            console.print("[green]No supply chain risks detected.[/]")
+
+    has_issues = any(r.finding_count > 0 for r in results)
+    sys.exit(1 if has_issues else 0)
+
+
+@cli.command(name="monitor")
+@click.option("--session", "-s", default="default", help="Session ID")
+@click.option("--actions", "-a", required=True,
+              help="JSON file containing actions to replay")
+@click.option("--format", "-o", "output_format", default="terminal",
+              type=click.Choice(["terminal", "json"]))
+def monitor(session: str, actions: str, output_format: str) -> None:
+    """Replay agent actions through runtime monitor for anomaly detection."""
+    from rich.table import Table
+    from core.runtime_monitor import RuntimeMonitor
+
+    path = Path(actions)
+    if not path.exists():
+        console.print(f"[red]File not found: {actions}[/]")
+        sys.exit(1)
+
+    action_list = json.loads(path.read_text(encoding="utf-8"))
+    mon = RuntimeMonitor()
+    alerts_found = []
+
+    for action in action_list:
+        alert = mon.record(
+            session_id=session,
+            action_type=action.get("type", action.get("tool", "unknown")),
+            target=action.get("target", ""),
+            tool_name=action.get("tool", "unknown"),
+        )
+        if alert:
+            alerts_found.append(alert)
+
+    profile = mon.get_session_profile(session)
+
+    if output_format == "json":
+        output = {
+            "profile": profile.to_dict() if profile else {},
+            "alerts": [a.to_dict() for a in alerts_found],
+        }
+        console.print(json.dumps(output, indent=2))
+        return
+
+    if profile:
+        console.print(f"\n[bold]Session: {session}[/]")
+        console.print(f"Actions: {profile.total_actions}")
+        console.print(f"Risk score: {profile.risk_score:.1f}")
+        console.print(f"Sensitive accesses: {profile.sensitive_accesses}")
+        console.print(f"Network requests: {profile.network_requests}")
+
+    if alerts_found:
+        table = Table(title=f"Alerts ({len(alerts_found)})")
+        table.add_column("Level")
+        table.add_column("Type")
+        table.add_column("Title", ratio=1)
+
+        level_colors = {"critical": "red", "warning": "yellow", "info": "cyan"}
+        for alert in alerts_found:
+            color = level_colors.get(alert.level.value, "white")
+            table.add_row(
+                f"[{color}]{alert.level.value.upper()}[/]",
+                alert.anomaly_type.value,
+                alert.title,
+            )
+        console.print(table)
+    else:
+        console.print("[green]No anomalies detected.[/]")
+
+    sys.exit(1 if alerts_found else 0)
+
+
+@cli.command(name="map-atlas")
+@click.option("--file", "-f", "file_path", required=True, help="JSON file with findings")
+@click.option("--layer", is_flag=True, help="Generate ATLAS Navigator JSON layer")
+@click.option("--format", "-o", "output_format", default="terminal",
+              type=click.Choice(["terminal", "json"]))
+def map_atlas(file_path: str, layer: bool, output_format: str) -> None:
+    """Map scanner findings to MITRE ATLAS technique IDs."""
+    from core.atlas_mapper import ATLASMapper
+
+    path = Path(file_path)
+    if not path.exists():
+        console.print(f"[red]File not found: {file_path}[/]")
+        sys.exit(1)
+
+    findings = json.loads(path.read_text(encoding="utf-8"))
+    mapper = ATLASMapper()
+    result = mapper.map_findings(findings)
+
+    if output_format == "json":
+        output = result.to_dict()
+        if layer:
+            output["navigator_layer"] = mapper.generate_navigator_layer(findings)
+        console.print(json.dumps(output, indent=2))
+        return
+
+    console.print(f"\n[bold]ATLAS Mapping Results[/]")
+    console.print(f"Findings: {result.total_findings} | Mapped: {result.mapped_findings} | "
+                  f"Coverage: {result.coverage_percent:.1f}%")
+    console.print(f"Techniques: {len(result.techniques_covered)} | Tactics: {len(result.tactics_covered)}")
+
+    if result.mappings:
+        from rich.table import Table
+        table = Table(title="Mapped Findings")
+        table.add_column("Finding")
+        table.add_column("ATLAS ID", style="cyan")
+        table.add_column("ATLAS Name")
+        table.add_column("Confidence")
+        for m in result.mappings[:20]:
+            table.add_row(
+                m["finding"].get("rule_id", m["finding"].get("category", "")),
+                m["atlas_technique"],
+                m["atlas_name"],
+                f"{m['confidence']:.0%}",
+            )
+        console.print(table)
+
+
+@cli.command(name="scan-model")
+@click.option("--file", "-f", "file_path", required=True, help="Model file to scan")
+@click.option("--format", "-o", "output_format", default="terminal",
+              type=click.Choice(["terminal", "json"]))
+def scan_model(file_path: str, output_format: str) -> None:
+    """Scan ML model files for serialization attacks and backdoors."""
+    from core.model_scanner import ModelScanner
+
+    scanner = ModelScanner()
+    result = scanner.scan_file(file_path)
+
+    if output_format == "json":
+        console.print(json.dumps(result.to_dict(), indent=2))
+        return
+
+    colors = {"safe": "green", "low": "cyan", "medium": "yellow", "high": "red", "critical": "red bold"}
+    color = colors.get(result.risk_level, "white")
+    console.print(f"\n[bold]{result.file_path}[/] ({result.format_detected})")
+    console.print(f"Risk: [{color}]{result.risk_level.upper()}[/] | Findings: {result.finding_count}")
+
+    for f in result.findings:
+        fc = colors.get(f.risk, "white")
+        console.print(f"  [{fc}]{f.risk.upper()}[/] {f.title}")
+        if f.atlas_technique:
+            console.print(f"    ATLAS: {f.atlas_technique}")
+
+    sys.exit(0 if result.is_safe else 1)
+
+
+@cli.command(name="detect-worm")
+@click.option("--text", "-t", default=None, help="Text to scan for worm patterns")
+@click.option("--file", "-f", "file_path", default=None, help="File to scan")
+@click.option("--format", "-o", "output_format", default="terminal",
+              type=click.Choice(["terminal", "json"]))
+def detect_worm(text: str | None, file_path: str | None, output_format: str) -> None:
+    """Detect self-replicating LLM worm prompts (AML.T0052)."""
+    from core.llm_worm_detector import LLMWormDetector
+
+    detector = LLMWormDetector()
+
+    if file_path:
+        result = detector.scan_file(file_path)
+    elif text:
+        result = detector.scan_text(text)
+    else:
+        console.print("[red]Provide --text or --file[/]")
+        sys.exit(1)
+
+    if output_format == "json":
+        console.print(json.dumps(result.to_dict(), indent=2))
+        return
+
+    if result.is_safe:
+        console.print("[green]No self-replicating patterns detected.[/]")
+    else:
+        console.print(f"[red bold]WORM PATTERNS DETECTED: {result.finding_count}[/]")
+        for f in result.findings:
+            console.print(f"  [{f.risk.upper()}] {f.title} (confidence: {f.confidence:.0%})")
+
+    sys.exit(0 if result.is_safe else 1)
+
+
+@cli.command(name="detect-clickbait")
+@click.option("--content", "-c", default=None, help="Content to scan")
+@click.option("--file", "-f", "file_path", default=None, help="HTML/text file to scan")
+@click.option("--type", "content_type", default="auto",
+              type=click.Choice(["auto", "html", "text"]))
+def detect_clickbait(content: str | None, file_path: str | None, content_type: str) -> None:
+    """Detect deceptive UI patterns targeting AI agents (AML.T0100)."""
+    from core.clickbait_detector import ClickbaitDetector
+
+    detector = ClickbaitDetector()
+
+    if file_path:
+        text = Path(file_path).read_text(encoding="utf-8", errors="ignore")
+        result = detector.scan_content(text, content_type)
+    elif content:
+        result = detector.scan_content(content, content_type)
+    else:
+        console.print("[red]Provide --content or --file[/]")
+        sys.exit(1)
+
+    if result.is_safe:
+        console.print("[green]No clickbait/lure patterns detected.[/]")
+    else:
+        console.print(f"[red]Clickbait patterns detected: {result.finding_count}[/]")
+        for f in result.findings:
+            console.print(f"  [{f.risk.upper()}] {f.title}")
+
+    sys.exit(0 if result.is_safe else 1)
+
+
 # Entry point
 def main() -> None:
     cli()

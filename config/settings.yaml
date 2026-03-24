@@ -1,0 +1,107 @@
+# Agentic AI Security Scanner — Global Settings
+# ─────────────────────────────────────────────────
+# Override these settings via CLI flags or environment variables.
+
+scanner:
+  # Default rules directory
+  rules_dir: "rules"
+
+  # Default output format: terminal, json, sarif
+  output_format: "terminal"
+
+  # Output verbosity: minimal, compact, full
+  verbosity: "compact"
+
+  # Maximum file size to scan (bytes) — skip files larger than this
+  max_file_size: 5242880  # 5 MB
+
+  # Directories to always exclude from scanning
+  exclude_dirs:
+    - node_modules
+    - .git
+    - __pycache__
+    - .venv
+    - venv
+    - env
+    - .tox
+    - .mypy_cache
+    - .ruff_cache
+    - dist
+    - build
+    - .eggs
+    - "*.egg-info"
+
+  # File extensions to scan
+  scan_extensions:
+    - .py
+    - .js
+    - .ts
+    - .tsx
+    - .jsx
+    - .java
+    - .go
+    - .php
+    - .rb
+    - .rs
+    - .swift
+    - .kt
+    - .kts
+    - .c
+    - .cpp
+    - .h
+    - .hpp
+    - .sh
+    - .bash
+    - .yaml
+    - .yml
+    - .tf
+    - .hcl
+    - Dockerfile
+
+grading:
+  # Security grade thresholds (score out of 100)
+  A: 90
+  B: 75
+  C: 60
+  D: 40
+  # Below D threshold = F
+
+policy:
+  # Load built-in policy rules on startup
+  load_builtin: true
+
+  # Additional policy file paths
+  custom_policies: []
+
+  # Default decision when no rule matches
+  default_decision: "allow"
+
+packages:
+  # Auto-build bloom filters from embedded package lists if .bloom files not found
+  auto_build_bloom: true
+
+  # Data directory for bloom filters and malicious package DB
+  data_dir: "data"
+
+  # Known malicious packages database
+  malicious_db: "data/known_malicious.yaml"
+
+llm:
+  # Default semantic review provider: claude, openai, mock
+  provider: "mock"
+
+  # Max lines of code to send to LLM
+  max_lines: 500
+
+  # Claude model to use
+  claude_model: "claude-sonnet-4-20250514"
+
+  # OpenAI model to use
+  openai_model: "gpt-4o"
+
+atlas:
+  # Enable ATLAS technique mapping in output
+  enabled: true
+
+  # Generate Navigator JSON layer alongside reports
+  generate_navigator_layer: false

@@ -1,0 +1,30 @@
+# Quick Scan Profile
+# ──────────────────
+# Fast scan for developer feedback loops.
+# Pattern matching only — no AST, taint, or semantic analysis.
+# Typical runtime: <5 seconds for a medium project.
+
+name: quick
+description: "Fast pattern-matching scan for quick developer feedback"
+
+engines:
+  pattern_matcher: true
+  ast_analyzer: false
+  taint_tracker: false
+  package_checker: false
+  prompt_scanner: false
+  semantic_reviewer: false
+  fix_generator: false
+
+severity_filter:
+  # Only report errors (skip warnings and info)
+  min_severity: error
+
+output:
+  verbosity: minimal
+  format: terminal
+
+limits:
+  max_file_size: 1048576  # 1 MB
+  max_files: 500
+  timeout_seconds: 30

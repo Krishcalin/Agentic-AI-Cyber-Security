@@ -1,6 +1,6 @@
 [build-system]
 requires = ["setuptools>=68.0", "wheel"]
-build-backend = "setuptools.backends._legacy:_Backend"
+build-backend = "setuptools.build_meta"
 
 [project]
 name = "agentic-ai-security"
@@ -31,8 +31,12 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-llm = ["anthropic>=0.30"]
-full = ["anthropic>=0.30", "tree-sitter>=0.20", "python-Levenshtein>=0.21"]
+llm = ["anthropic>=0.30", "openai>=1.0"]
+full = [
+    "anthropic>=0.30",
+    "openai>=1.0",
+    "python-Levenshtein>=0.21",
+]
 dev = ["pytest>=7.0", "pytest-cov>=4.0", "ruff>=0.1.0", "mypy>=1.5"]
 
 [project.scripts]

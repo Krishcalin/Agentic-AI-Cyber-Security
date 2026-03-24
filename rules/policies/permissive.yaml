@@ -1,0 +1,61 @@
+name: permissive
+version: "1.0"
+description: "Permissive policy — allows most operations, blocks only known-dangerous patterns"
+default_decision: allow
+
+rules:
+  - id: PERM-CMD-001
+    name: "Block destructive commands"
+    scope: command
+    decision: deny
+    patterns:
+      - "rm\\s+-rf\\s+/"
+      - "mkfs\\."
+      - "dd\\s+if=.*of=/dev/"
+    priority: 100
+    description: "Block only the most destructive commands"
+
+  - id: PERM-CMD-002
+    name: "Block reverse shells"
+    scope: command
+    decision: deny
+    patterns:
+      - "bash\\s+-i\\s+>&\\s*/dev/tcp"
+      - "nc\\s+-[elp]"
+      - "ncat\\s+-[elp]"
+    priority: 100
+    description: "Block reverse shell patterns"
+
+  - id: PERM-NET-001
+    name: "Block known exfiltration services"
+    scope: network
+    decision: deny
+    patterns:
+      - "ngrok\\.io"
+      - "requestbin"
+      - "hookbin"
+      - "burpcollaborator"
+      - "pipedream"
+    priority: 100
+    description: "Block known data exfiltration endpoints"
+
+  - id: PERM-PKG-001
+    name: "Block known malicious packages"
+    scope: package
+    decision: deny
+    patterns:
+      - "^(colourama|python-dateutils|jeIlyfish)$"
+    priority: 100
+    description: "Block confirmed malicious packages only"
+
+rate_limits:
+  - scope: command
+    max_actions: 200
+    window_seconds: 60
+    decision: warn
+    description: "Warn at 200 commands per minute"
+  - scope: network
+    max_actions: 100
+    window_seconds: 60
+    decision: warn
+    description: "Warn at 100 network requests per minute"

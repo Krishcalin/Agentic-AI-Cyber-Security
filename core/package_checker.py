@@ -82,6 +82,7 @@ class PackageChecker:
         self._known_malicious: dict[str, set[str]] = {}
         self._extractor = ImportExtractor()
         self._load_malicious_db(known_malicious_path)
+        self._auto_load_bloom_filters()
 
     def _load_malicious_db(self, path: str) -> None:
         """Load known malicious package database."""
@@ -98,6 +99,24 @@ class PackageChecker:
                 log.info("malicious_db_loaded", entries=sum(len(v) for v in self._known_malicious.values()))
             except Exception as e:
                 log.warning("malicious_db_load_failed", error=str(e))
+
+    def _auto_load_bloom_filters(self) -> None:
+        """Auto-load bloom filters from data/ or build from embedded lists."""
+        bloom_files = {
+            "pypi": self.data_dir / "pypi_packages.bloom",
+            "npm": self.data_dir / "npm_packages.bloom",
+            "crates": self.data_dir / "crates_packages.bloom",
+        }
+
+        for registry, path in bloom_files.items():
+            if path.exists():
+                self.load_bloom_filter(registry, str(path))
+            else:
+                # Build from embedded popular package lists
+                packages = _BUILTIN_PACKAGES.get(registry, [])
+                if packages:
+                    self.build_bloom_filter(registry, packages)
+                    log.info("bloom_auto_built", registry=registry, packages=len(packages))
 
     def load_bloom_filter(self, registry: str, path: str) -> None:
         """Load a pre-built bloom filter for a registry."""
@@ -271,3 +290,87 @@ class PackageChecker:
             prev_row = curr_row
 
         return prev_row[-1]
+
+
+# ── Built-in Popular Package Lists (for auto-building bloom filters) ──────
+
+_BUILTIN_PACKAGES: dict[str, list[str]] = {
+    "pypi": [
+        "flask", "django", "fastapi", "tornado", "bottle", "sanic", "starlette",
+        "uvicorn", "gunicorn", "aiohttp", "quart", "falcon",
+        "requests", "httpx", "urllib3", "httplib2", "grpcio", "websockets", "paramiko",
+        "numpy", "pandas", "scipy", "scikit-learn", "matplotlib", "seaborn",
+        "tensorflow", "torch", "keras", "xgboost", "lightgbm", "catboost",
+        "transformers", "datasets", "tokenizers", "accelerate", "safetensors",
+        "diffusers", "peft", "huggingface-hub", "torchvision", "torchaudio",
+        "langchain", "llama-index", "openai", "anthropic", "cohere",
+        "sqlalchemy", "psycopg2", "psycopg2-binary", "pymysql", "pymongo",
+        "redis", "celery", "elasticsearch", "asyncpg", "sqlmodel",
+        "pytest", "pytest-cov", "pytest-asyncio", "pytest-mock", "coverage",
+        "hypothesis", "faker", "tox", "nox", "responses", "moto",
+        "click", "typer", "fire", "docopt",
+        "pyyaml", "toml", "tomli", "python-dotenv",
+        "pydantic", "pydantic-settings", "attrs", "marshmallow",
+        "rich", "tqdm", "colorama", "structlog", "loguru",
+        "arrow", "pendulum", "python-dateutil", "pytz",
+        "pillow", "jinja2", "mako",
+        "more-itertools", "toolz", "tenacity", "cachetools",
+        "cryptography", "pycryptodome", "pynacl", "bcrypt", "passlib",
+        "certifi", "cffi", "pyjwt", "itsdangerous",
+        "boto3", "botocore", "google-cloud-storage", "azure-storage-blob",
+        "docker", "kubernetes", "ansible",
+        "protobuf", "msgpack", "orjson", "ujson",
+        "ruff", "black", "isort", "flake8", "pylint", "mypy", "bandit",
+        "setuptools", "wheel", "pip", "poetry", "build", "twine", "hatch",
+        "beautifulsoup4", "lxml", "scrapy", "selenium", "playwright",
+        "openpyxl", "reportlab", "pypdf2",
+        "sphinx", "mkdocs", "mkdocs-material",
+        "psutil", "watchdog", "schedule",
+        "typing-extensions", "packaging", "six", "wrapt", "decorator",
+        "charset-normalizer", "idna", "filelock",
+    ],
+    "npm": [
+        "express", "koa", "fastify", "next", "nuxt", "gatsby", "remix", "astro",
+        "react", "react-dom", "react-router", "react-router-dom",
+        "vue", "vuex", "vue-router", "angular", "@angular/core",
+        "svelte", "solid-js", "preact", "lit",
+        "webpack", "vite", "esbuild", "rollup", "parcel",
+        "@babel/core", "@babel/preset-env", "typescript", "ts-node", "tsx",
+        "jest", "mocha", "chai", "vitest", "playwright", "cypress", "puppeteer",
+        "@testing-library/react", "supertest",
+        "lodash", "underscore", "ramda", "immer",
+        "moment", "dayjs", "date-fns", "luxon",
+        "uuid", "nanoid", "chalk", "ora", "inquirer", "commander", "yargs",
+        "debug", "winston", "pino", "morgan", "dotenv",
+        "glob", "minimatch", "fs-extra", "chokidar",
+        "cheerio", "jsdom", "marked", "handlebars", "ejs", "pug",
+        "axios", "got", "node-fetch", "undici", "cors",
+        "body-parser", "multer", "cookie-parser", "express-session",
+        "mongoose", "sequelize", "typeorm", "prisma", "@prisma/client",
+        "knex", "redis", "ioredis", "bull", "pg", "mysql2", "sqlite3",
+        "jsonwebtoken", "passport", "bcrypt", "bcryptjs", "helmet",
+        "eslint", "prettier", "@typescript-eslint/parser",
+        "redux", "@reduxjs/toolkit", "zustand", "mobx", "xstate",
+        "tailwindcss", "postcss", "autoprefixer", "sass",
+        "styled-components", "@emotion/react", "classnames", "clsx",
+        "socket.io", "ws", "sharp", "nodemailer", "stripe",
+        "aws-sdk", "@aws-sdk/client-s3", "firebase",
+        "zod", "yup", "joi", "ajv", "rxjs", "semver",
+    ],
+    "crates": [
+        "serde", "serde_json", "serde_yaml", "toml",
+        "tokio", "async-std", "futures",
+        "reqwest", "hyper", "actix-web", "axum", "warp", "rocket",
+        "clap", "structopt", "log", "env_logger", "tracing",
+        "anyhow", "thiserror", "rand", "uuid", "chrono", "time",
+        "regex", "once_cell", "lazy_static", "rayon", "crossbeam",
+        "sqlx", "diesel", "sea-orm", "rusqlite", "redis",
+        "ring", "rustls", "openssl", "sha2", "argon2", "jsonwebtoken",
+        "bincode", "prost", "tonic",
+        "indicatif", "console", "colored", "ratatui", "crossterm",
+        "criterion", "proptest", "mockall",
+        "tower", "tower-http", "http", "url",
+        "itertools", "num", "image", "walkdir", "tempfile",
+        "config", "dotenv", "tera", "askama",
+    ],
+}

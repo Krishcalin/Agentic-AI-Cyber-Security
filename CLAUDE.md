@@ -10,8 +10,8 @@ command-line interfaces and CI/CD pipelines.
 **Repository**: https://github.com/Krishcalin/Agentic-AI-Cyber-Security
 **License**: MIT
 **Python**: 3.10+
-**Status**: All 10 phases complete — ~14,400 lines of code
-**Rules**: 237 across 12 languages | **Engines**: 7 | **MCP Tools**: 12
+**Status**: All phases + P1/P2/P3 complete — MITRE ATLAS + OWASP LLM Top 10 mapped
+**Rules**: 441 across 19 languages | **Engines**: 24 | **MCP Tools**: 30 | **CLI Commands**: 25+
 **Inspired by**: [sinewaveai/agent-security-scanner-mcp](https://github.com/sinewaveai/agent-security-scanner-mcp)
 
 ---
@@ -38,6 +38,14 @@ Agentic-AI-Cyber-Security/
 │   ├── prompt_scanner.py              # Prompt injection detection engine
 │   ├── semantic_reviewer.py           # LLM-powered code review (Claude API)
 │   ├── fix_generator.py               # Auto-fix template engine
+│   ├── mcp_auditor.py                 # MCP server security auditor (Tier 1)
+│   ├── rag_scanner.py                 # RAG pipeline security scanner (Tier 1)
+│   ├── tool_response_analyzer.py      # Tool response injection analyzer (Tier 1)
+│   ├── chain_detector.py              # Multi-step exploit chain detector (Tier 2)
+│   ├── policy_engine.py               # Declarative YAML policy engine (Tier 2)
+│   ├── runtime_monitor.py             # Real-time session anomaly detection (Tier 2)
+│   ├── redteam_generator.py           # Adversarial test suite generator (Tier 2)
+│   ├── dependency_analyzer.py         # Supply chain dependency analyzer (Tier 2)
 │   ├── reporter.py                    # Report generation (terminal, JSON, SARIF, HTML)
 │   ├── grader.py                      # A–F security grading system
 │   ├── models.py                      # Data models (Finding, ScanResult, Severity)
@@ -53,6 +61,11 @@ Agentic-AI-Cyber-Security/
 │   ├── dockerfile.yaml                # Dockerfile rules
 │   ├── terraform.yaml                 # Terraform/IaC rules
 │   ├── kubernetes.yaml                # Kubernetes manifest rules
+│   ├── typescript.yaml                # TypeScript rules (34) — Tier 2
+│   ├── shell.yaml                     # Shell/Bash rules (30) — Tier 2
+│   ├── rust.yaml                      # Rust rules (30) — Tier 2
+│   ├── swift.yaml                     # Swift/iOS rules (30) — Tier 2
+│   ├── kotlin.yaml                    # Kotlin/Android rules (30) — Tier 2
 │   ├── prompt_injection.yaml          # Prompt injection patterns
 │   └── common.yaml                    # Cross-language rules (secrets, hardcoded creds)
 ├── mcp_server/                        # MCP (Model Context Protocol) server
@@ -327,7 +340,7 @@ Standalone HTML report with executive summary, finding details, and security gra
 - [x] Dockerfile rules (16) — :latest, root, secrets, curl|bash
 - [x] Terraform rules (16) — public S3, IAM wildcards, open SG
 - [x] Kubernetes rules (22) — privileged, RBAC wildcards, hostPath
-- [x] Total: 237 rules across 12 languages
+- [x] Total: 237 rules across 12 languages (Phase 8 baseline)
 
 ### Phase 9 — Reporting & CI/CD (COMPLETE)
 - [x] Enhanced SARIF 2.1.0 exporter with fingerprints, CWE helpUris, taint codeFlows
@@ -345,6 +358,66 @@ Standalone HTML report with executive summary, finding details, and security gra
 - [x] False positive tests (clean code, comments, parameterized SQL)
 - [x] Integration tests (full pipeline: scan → grade → fix → report → SARIF)
 - [x] MCP protocol tests (initialize, tools/list, tools/call, shutdown)
+
+### Tier 1 — Advanced AI Security (COMPLETE)
+- [x] MCP Server Auditor (`core/mcp_auditor.py`) — tool definitions, schema injection, exfiltration chains
+- [x] RAG Pipeline Scanner (`core/rag_scanner.py`) — document injection (9), sensitive data (10), exfiltration (4)
+- [x] Tool Response Analyzer (`core/tool_response_analyzer.py`) — injection (9), exfiltration (5), escalation (4)
+- [x] 3 new MCP tools: audit_mcp_server, scan_rag_document, analyze_tool_response
+- [x] 2 new CLI commands: audit-mcp, scan-rag
+- [x] Tests: test_tier1_features.py (40+ test cases)
+
+### Tier 2 — Agent Security & Extended Rules (COMPLETE)
+- [x] Agent Exploit Chain Detector (`core/chain_detector.py`) — 20+ chain patterns, 928 lines
+- [x] Policy Engine (`core/policy_engine.py`) — declarative YAML allow/deny/warn, rate limiting
+- [x] Runtime Agent Monitor (`core/runtime_monitor.py`) — session tracking, anomaly detection, risk scoring
+- [x] Red Team Generator (`core/redteam_generator.py`) — 50+ adversarial payloads, 8 categories, benchmarking
+- [x] Dependency Analyzer (`core/dependency_analyzer.py`) — 7 file formats, typosquat, malicious, confusion
+- [x] TypeScript rules (34) — XSS, eval, type safety, Deno sandbox, prototype pollution, ReDoS
+- [x] Rust rules (30) — unsafe blocks, transmute, raw pointers, FFI, static mut, concurrency
+- [x] Shell/Bash rules (30) — injection, download-execute, chmod, secrets, persistence, quoting
+- [x] Swift rules (30) — WebView XSS, Keychain, ATS, UserDefaults, unsafe pointers
+- [x] Kotlin rules (30) — Android WebView, SharedPreferences, AES/ECB, broadcast, debuggable
+- [x] 5 new MCP tools: detect_exploit_chains, evaluate_policy, generate_redteam, analyze_dependencies, monitor_session
+- [x] 5 new CLI commands: detect-chains, check-policy, redteam, analyze-deps, monitor
+- [x] Tests: test_tier2_features.py (60+ test cases)
+- [x] Total: 391 rules across 16 languages, 15 engines, 20 MCP tools
+
+### Tier 3 — MITRE ATLAS Integration (COMPLETE)
+- [x] ATLAS Mapper (`core/atlas_mapper.py`) — maps findings to 45+ ATLAS technique IDs, Navigator JSON layers
+- [x] Model Serialization Scanner (`core/model_scanner.py`) — pickle exploits, backdoor detection, unsafe loading
+- [x] LLM Worm Detector (`core/llm_worm_detector.py`) — 18+ self-replication patterns, output replication check
+- [x] Inference Monitor (`core/inference_monitor.py`) — model extraction, cost harvesting, DoS detection
+- [x] Clickbait Detector (`core/clickbait_detector.py`) — 27+ patterns for deceptive UI targeting AI agents
+- [x] 5 new MCP tools: map_atlas, scan_model, detect_llm_worm, monitor_inference, detect_clickbait
+- [x] 5 new CLI commands: map-atlas, scan-model, detect-worm, detect-clickbait
+- [x] Tests: test_tier3_features.py (50+ test cases)
+- [x] ATLAS technique mapping covering: T0010 (supply chain), T0018 (backdoor), T0020 (data poisoning),
+      T0024 (exfiltration), T0025 (cyber exfil), T0029 (DoS), T0034 (cost harvest), T0043 (adversarial),
+      T0050 (command exec), T0051 (prompt injection), T0052 (worm), T0053 (plugin compromise),
+      T0054 (jailbreak), T0055 (credentials), T0056 (data leakage), T0058 (context poisoning),
+      T0096 (API exploitation), T0098 (credential harvest), T0099 (data poisoning), T0100 (clickbait),
+      T0101 (data destruction), T0102 (malicious commands)
+- [x] Total: 391 rules, 20 engines, 25 MCP tools, 21 CLI commands
+
+### P1 — High-Impact Features (COMPLETE)
+- [x] OWASP LLM Top 10 Mapper (`core/owasp_llm_mapper.py`) — maps findings to all 10 OWASP LLM entries
+- [x] HTML Report Template (`templates/report.html`) — Jinja2 dark-mode report with ATLAS/OWASP badges
+- [x] Policy Profiles — strict (deny-all), permissive (block-dangerous), enterprise (audit + SOC2)
+- [x] C# rules (30) — SQL injection, BinaryFormatter, XXE, XSS, CORS, LDAP injection
+- [x] YAML security rules (20) — secrets, deserialization tags, SSL/TLS, debug mode
+- [x] Config profiles: quick.yaml, full.yaml, ci.yaml with engine toggles
+
+### P2 — Competitive Differentiators (COMPLETE)
+- [x] Agent Sandbox Evaluator (`core/sandbox_evaluator.py`) — filesystem/network/process/credential isolation scoring
+- [x] Enhanced Secrets Scanner (`core/secrets_scanner.py`) — 40+ patterns, Shannon entropy, false positive filtering
+- [x] SBOM Generator (`core/sbom_generator.py`) — CycloneDX 1.5 JSON from 7 dependency formats
+
+### P3 — Production Readiness (COMPLETE)
+- [x] Dockerfile with non-root user, health check
+- [x] PyPI publish workflow (`.github/workflows/publish.yml`) — trusted publishing + Docker
+- [x] Mypy type checking in CI pipeline
+- [x] Total: 441 rules, 24 engines, 30 MCP tools, 19 languages
 
 ---
 

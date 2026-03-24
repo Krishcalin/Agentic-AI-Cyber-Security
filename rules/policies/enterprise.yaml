@@ -1,0 +1,171 @@
+name: enterprise
+version: "1.0"
+description: "Enterprise policy — balanced security with audit logging, compliant with SOC2/ISO27001"
+default_decision: audit
+
+rules:
+  # ── Command Controls ──────────────────────────────────────────────
+  - id: ENT-CMD-001
+    name: "Block destructive and exploit commands"
+    scope: command
+    decision: deny
+    patterns:
+      - "rm\\s+-rf\\s+/"
+      - "mkfs\\."
+      - "dd\\s+if=.*of=/dev/"
+      - ":(\\)\\{\\s*:\\|:&\\s*\\};:"
+    priority: 100
+
+  - id: ENT-CMD-002
+    name: "Block reverse shells and C2"
+    scope: command
+    decision: deny
+    patterns:
+      - "bash\\s+-i\\s+>&"
+      - "nc\\s+-[elp]"
+      - "ncat\\s+-[elp]"
+      - "python.*socket.*connect"
+      - "perl.*socket"
+    priority: 100
+
+  - id: ENT-CMD-003
+    name: "Block credential dumping"
+    scope: command
+    decision: deny
+    patterns:
+      - "mimikatz"
+      - "sekurlsa"
+      - "hashdump"
+      - "procdump.*lsass"
+      - "secretsdump"
+    priority: 100
+
+  - id: ENT-CMD-004
+    name: "Audit privilege escalation"
+    scope: command
+    decision: audit
+    patterns:
+      - "sudo\\s+"
+      - "su\\s+-"
+      - "chmod\\s+[47]"
+      - "chown\\s+root"
+    priority: 80
+    description: "Log all privilege escalation attempts"
+
+  - id: ENT-CMD-005
+    name: "Audit persistence mechanisms"
+    scope: command
+    decision: audit
+    patterns:
+      - "crontab"
+      - "schtasks"
+      - "systemctl\\s+enable"
+      - "reg\\s+add.*\\\\Run"
+    priority: 80
+
+  # ── Network Controls ──────────────────────────────────────────────
+  - id: ENT-NET-001
+    name: "Block exfiltration endpoints"
+    scope: network
+    decision: deny
+    patterns:
+      - "ngrok\\.io"
+      - "requestbin"
+      - "hookbin"
+      - "burpcollaborator"
+      - "pipedream"
+      - "webhook\\.site"
+      - "canarytokens"
+    priority: 100
+
+  - id: ENT-NET-002
+    name: "Warn on non-HTTPS"
+    scope: network
+    decision: warn
+    patterns:
+      - "^http://(?!localhost|127\\.0\\.0\\.1)"
+    priority: 60
+
+  - id: ENT-NET-003
+    name: "Audit all external API calls"
+    scope: network
+    decision: audit
+    patterns:
+      - "https?://"
+    exceptions:
+      - "localhost"
+      - "127\\.0\\.0\\.1"
+      - "10\\."
+      - "192\\.168\\."
+      - "172\\.(1[6-9]|2|3[01])\\."
+    priority: 30
+    description: "Log all external network requests for SOC2 compliance"
+
+  # ── File Controls ─────────────────────────────────────────────────
+  - id: ENT-FILE-001
+    name: "Block writes to system directories"
+    scope: file_write
+    decision: deny
+    patterns:
+      - "^/etc/"
+      - "^/usr/"
+      - "^C:\\\\Windows\\\\"
+      - "^C:\\\\Program Files"
+    priority: 90
+
+  - id: ENT-FILE-002
+    name: "Audit sensitive file reads"
+    scope: file_read
+    decision: audit
+    patterns:
+      - "\\.env"
+      - "\\.aws"
+      - "\\.ssh"
+      - "credential"
+      - "password"
+      - "secret"
+      - "\\.key$"
+      - "\\.pem$"
+    priority: 70
+    description: "Log access to credential and secret files"
+
+  # ── Package Controls ──────────────────────────────────────────────
+  - id: ENT-PKG-001
+    name: "Block known malicious packages"
+    scope: package
+    decision: deny
+    patterns:
+      - "^(colourama|python-dateutils|jeIlyfish|python3-dateutil)$"
+      - "^(event-stream|ua-parser-js|colors|faker|node-ipc)$"
+    priority: 100
+
+  - id: ENT-PKG-002
+    name: "Audit all package installations"
+    scope: package
+    decision: audit
+    patterns:
+      - ".*"
+    priority: 20
+    description: "Log all package installations for compliance audit trail"
+
+rate_limits:
+  - scope: command
+    max_actions: 100
+    window_seconds: 60
+    decision: warn
+    description: "Warn at 100 commands per minute"
+  - scope: file_read
+    max_actions: 200
+    window_seconds: 60
+    decision: warn
+    description: "Warn at 200 file reads per minute"
+  - scope: network
+    max_actions: 50
+    window_seconds: 60
+    decision: warn
+    description: "Warn at 50 network requests per minute"
+  - scope: package
+    max_actions: 5
+    window_seconds: 300
+    decision: deny
+    description: "Max 5 package installs per 5 minutes"

@@ -1,0 +1,54 @@
+# CI/CD Scan Profile
+# ───────────────────
+# Optimized for CI pipelines with SARIF output and exit codes.
+# Pattern matching + AST + package verification. No LLM calls.
+# Typical runtime: 10-30 seconds for a medium project.
+
+name: ci
+description: "CI/CD optimized scan with SARIF output and exit codes"
+
+engines:
+  pattern_matcher: true
+  ast_analyzer: true
+  taint_tracker: true
+  package_checker: true
+  prompt_scanner: true
+  semantic_reviewer: false  # No LLM calls in CI
+  fix_generator: false      # Fixes generated separately
+
+severity_filter:
+  # Report errors and warnings (skip info)
+  min_severity: warning
+
+output:
+  verbosity: compact
+  format: sarif
+  # Output path for SARIF file
+  sarif_output: "results.sarif"
+
+limits:
+  max_file_size: 5242880  # 5 MB
+  max_files: 10000
+  timeout_seconds: 180
+
+exit_codes:
+  # Exit code when critical/error findings detected
+  on_error: 2
+  # Exit code when warnings detected
+  on_warning: 1
+  # Exit code when clean
+  on_clean: 0
+
+# Only scan changed files (git diff mode)
+diff_mode:
+  enabled: false
+  base_ref: "origin/main"
+
+atlas:
+  enabled: true
+
+packages:
+  check_imports: true
+  check_dependencies: true
+  # Fail CI on malicious packages
+  fail_on_malicious: true

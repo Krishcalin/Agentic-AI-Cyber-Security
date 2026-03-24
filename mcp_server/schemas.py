@@ -1,4 +1,4 @@
-"""MCP tool schemas — input/output definitions for all 11 tools."""
+"""MCP tool schemas — input/output definitions for all 20 scanner tools."""
 
 from __future__ import annotations
 
@@ -152,6 +152,104 @@ def get_tool_definitions() -> list[dict[str, Any]]:
                     {"required": ["file_path"]},
                     {"required": ["code", "language"]},
                 ],
+            },
+        },
+        # ── Tier 1 Tools ─────────────────────────────────────────────────
+        {
+            "name": "audit_mcp_server",
+            "description": "Audit an MCP server's tool definitions for dangerous capabilities, schema injection, missing safety controls, and exfiltration chains.",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "tools": {"type": "array", "description": "MCP tools/list response array"},
+                    "server_name": {"type": "string", "description": "Name of the MCP server", "default": "unknown"},
+                },
+                "required": ["tools"],
+            },
+        },
+        {
+            "name": "scan_rag_document",
+            "description": "Scan a document for RAG pipeline injection attacks including hidden instructions, sensitive data exposure, and exfiltration attempts.",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "content": {"type": "string", "description": "Document text to scan"},
+                    "file_path": {"type": "string", "description": "Path to document file"},
+                },
+            },
+        },
+        {
+            "name": "analyze_tool_response",
+            "description": "Analyze an MCP tool response for injection attacks, exfiltration URLs, and escalation patterns before passing to LLM.",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "tool_name": {"type": "string", "description": "Name of the tool that produced the response"},
+                    "response": {"type": "string", "description": "Tool response text to analyze"},
+                },
+                "required": ["response"],
+            },
+        },
+        # ── Tier 2 Tools ─────────────────────────────────────────────────
+        {
+            "name": "detect_exploit_chains",
+            "description": "Detect multi-step exploit chains (exfiltration, persistence, privilege escalation) in a sequence of agent actions.",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "actions": {"type": "array", "description": "Sequence of {tool, target} objects"},
+                    "session_id": {"type": "string", "default": "mcp"},
+                },
+                "required": ["actions"],
+            },
+        },
+        {
+            "name": "evaluate_policy",
+            "description": "Evaluate an agent action against security policies. Returns allow/deny/warn decision.",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "scope": {"type": "string", "enum": ["command", "file_read", "file_write", "network", "package"]},
+                    "target": {"type": "string", "description": "Action target"},
+                },
+                "required": ["scope", "target"],
+            },
+        },
+        {
+            "name": "generate_redteam",
+            "description": "Generate adversarial red team test suite for benchmarking agent security defenses.",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "category": {"type": "string", "enum": ["prompt_injection", "tool_abuse", "evasion", "supply_chain", "mcp_poisoning", "rag_injection"]},
+                    "difficulty": {"type": "string", "enum": ["easy", "medium", "hard", "expert"]},
+                    "benchmark": {"type": "boolean", "default": False},
+                },
+            },
+        },
+        {
+            "name": "analyze_dependencies",
+            "description": "Analyze dependency files for supply chain risks including typosquatting, malicious packages, and dependency confusion.",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "file_path": {"type": "string", "description": "Dependency file path"},
+                    "directory": {"type": "string", "description": "Project directory"},
+                },
+            },
+        },
+        {
+            "name": "monitor_session",
+            "description": "Record agent action and check for real-time anomalies.",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "session_id": {"type": "string"},
+                    "action_type": {"type": "string"},
+                    "target": {"type": "string"},
+                    "tool_name": {"type": "string"},
+                },
+                "required": ["session_id", "action_type", "target"],
             },
         },
     ]

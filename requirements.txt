@@ -1,5 +1,13 @@
+# Core dependencies (required)
 click>=8.0
 pyyaml>=6.0
 rich>=13.0
 structlog>=23.0
 jinja2>=3.1
+
+# Optional: LLM-powered semantic review
+# anthropic>=0.30
+# openai>=1.0
+
+# Optional: Enhanced package checking
+# python-Levenshtein>=0.21

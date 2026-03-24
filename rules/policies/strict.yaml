@@ -1,0 +1,77 @@
+name: strict
+version: "1.0"
+description: "Strict security policy — denies all risky operations, minimal exceptions"
+default_decision: deny
+
+rules:
+  - id: STRICT-CMD-001
+    name: "Allow only safe commands"
+    scope: command
+    decision: allow
+    patterns:
+      - "^(ls|dir|pwd|whoami|date|echo|cat|head|tail|wc|sort|uniq|grep|find|git\\s+(status|log|diff|branch))\\b"
+    priority: 50
+    description: "Whitelist of safe read-only commands"
+
+  - id: STRICT-CMD-002
+    name: "Block all shell operators"
+    scope: command
+    decision: deny
+    patterns:
+      - "\\|"
+      - "&&"
+      - "\\;\\s"
+      - "\\$\\("
+      - "`"
+    priority: 90
+    description: "Block pipes, chaining, and command substitution"
+
+  - id: STRICT-NET-001
+    name: "Allow only HTTPS to known domains"
+    scope: network
+    decision: deny
+    patterns:
+      - "^http://"
+      - "\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}"
+    exceptions:
+      - "127\\.0\\.0\\.1"
+      - "localhost"
+    priority: 80
+    description: "Block all non-HTTPS and direct IP connections"
+
+  - id: STRICT-FILE-001
+    name: "Block writes outside project directory"
+    scope: file_write
+    decision: deny
+    patterns:
+      - "^/"
+      - "^[A-Z]:\\\\"
+      - "\\.\\."
+    priority: 90
+    description: "Only allow writes within current working directory"
+
+  - id: STRICT-PKG-001
+    name: "Block all package installations"
+    scope: package
+    decision: deny
+    patterns:
+      - ".*"
+    priority: 100
+    description: "No package installations allowed in strict mode"
+
+rate_limits:
+  - scope: command
+    max_actions: 20
+    window_seconds: 60
+    decision: deny
+    description: "Max 20 commands per minute"
+  - scope: file_read
+    max_actions: 50
+    window_seconds: 60
+    decision: deny
+    description: "Max 50 file reads per minute"
+  - scope: network
+    max_actions: 10
+    window_seconds: 60
+    decision: deny
+    description: "Max 10 network requests per minute"

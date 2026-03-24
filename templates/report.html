@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{ title | default("Security Scan Report") }}</title>
+<style>
+  :root {
+    --bg: #0f172a; --surface: #1e293b; --border: #334155;
+    --text: #e2e8f0; --muted: #94a3b8; --accent: #8b5cf6;
+    --green: #10b981; --yellow: #f59e0b; --red: #ef4444; --cyan: #06b6d4;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Inter', -apple-system, sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; }
+  .container { max-width: 1200px; margin: 0 auto; padding: 2rem; }
+  h1 { font-size: 1.75rem; color: #fff; margin-bottom: 0.5rem; }
+  h2 { font-size: 1.25rem; color: var(--accent); margin: 2rem 0 1rem; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; }
+  h3 { font-size: 1rem; color: var(--cyan); margin: 1.5rem 0 0.75rem; }
+
+  .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; padding-bottom: 1rem; border-bottom: 2px solid var(--accent); }
+  .grade { font-size: 3rem; font-weight: 800; padding: 0.5rem 1.5rem; border-radius: 12px; }
+  .grade-A { background: rgba(16,185,129,0.15); color: var(--green); border: 2px solid var(--green); }
+  .grade-B { background: rgba(16,185,129,0.1); color: var(--green); border: 2px solid var(--green); }
+  .grade-C { background: rgba(245,158,11,0.15); color: var(--yellow); border: 2px solid var(--yellow); }
+  .grade-D { background: rgba(245,158,11,0.15); color: var(--yellow); border: 2px solid var(--yellow); }
+  .grade-F { background: rgba(239,68,68,0.15); color: var(--red); border: 2px solid var(--red); }
+
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem; margin: 1.5rem 0; }
+  .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 1rem; text-align: center; }
+  .stat-card .value { font-size: 2rem; font-weight: 700; }
+  .stat-card .label { font-size: 0.75rem; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
+
+  table { width: 100%; border-collapse: collapse; margin: 1rem 0; }
+  th { background: var(--surface); color: var(--muted); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1px; padding: 0.75rem; text-align: left; border-bottom: 2px solid var(--border); }
+  td { padding: 0.6rem 0.75rem; border-bottom: 1px solid var(--border); font-size: 0.85rem; }
+  tr:hover { background: rgba(139,92,246,0.05); }
+
+  .severity { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: 600; text-transform: uppercase; }
+  .severity-error { background: rgba(239,68,68,0.15); color: var(--red); }
+  .severity-warning { background: rgba(245,158,11,0.15); color: var(--yellow); }
+  .severity-info { background: rgba(6,182,212,0.15); color: var(--cyan); }
+
+  .compliance { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; }
+  .compliance-card { background: var(--surface); border-radius: 8px; padding: 1rem; border-left: 4px solid; }
+  .compliance-card.pass { border-left-color: var(--green); }
+  .compliance-card.fail { border-left-color: var(--red); }
+  .compliance-id { font-weight: 700; font-size: 0.85rem; }
+  .compliance-name { color: var(--muted); font-size: 0.8rem; }
+  .compliance-status { float: right; font-weight: 700; font-size: 0.8rem; }
+  .compliance-status.pass { color: var(--green); }
+  .compliance-status.fail { color: var(--red); }
+
+  .atlas-tag { display: inline-block; background: rgba(220,38,38,0.1); color: #f87171; padding: 1px 6px; border-radius: 3px; font-size: 0.7rem; font-family: monospace; margin: 1px; }
+  .owasp-tag { display: inline-block; background: rgba(139,92,246,0.1); color: #a78bfa; padding: 1px 6px; border-radius: 3px; font-size: 0.7rem; font-family: monospace; margin: 1px; }
+  .cwe-tag { display: inline-block; background: rgba(6,182,212,0.1); color: #22d3ee; padding: 1px 6px; border-radius: 3px; font-size: 0.7rem; font-family: monospace; margin: 1px; }
+
+  .footer { margin-top: 3rem; padding-top: 1rem; border-top: 1px solid var(--border); text-align: center; color: var(--muted); font-size: 0.75rem; }
+  code { background: var(--surface); padding: 2px 6px; border-radius: 4px; font-size: 0.85em; }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <div>
+      <h1>{{ title | default("Security Scan Report") }}</h1>
+      <p style="color: var(--muted);">Generated {{ timestamp }} by Agentic AI Security Scanner</p>
+    </div>
+    <div class="grade grade-{{ grade }}">{{ grade }}</div>
+  </div>
+
+  <!-- Executive Summary -->
+  <div class="stats">
+    <div class="stat-card"><div class="value" style="color:var(--accent)">{{ score }}</div><div class="label">Score</div></div>
+    <div class="stat-card"><div class="value" style="color:var(--red)">{{ errors }}</div><div class="label">Errors</div></div>
+    <div class="stat-card"><div class="value" style="color:var(--yellow)">{{ warnings }}</div><div class="label">Warnings</div></div>
+    <div class="stat-card"><div class="value" style="color:var(--cyan)">{{ infos }}</div><div class="label">Info</div></div>
+    <div class="stat-card"><div class="value">{{ total_files }}</div><div class="label">Files Scanned</div></div>
+    <div class="stat-card"><div class="value">{{ duration }}s</div><div class="label">Duration</div></div>
+  </div>
+
+  <!-- Findings Table -->
+  <h2>Findings ({{ findings | length }})</h2>
+  {% if findings %}
+  <table>
+    <thead><tr><th>Severity</th><th>File</th><th>Line</th><th>Rule</th><th>Message</th><th>CWE</th><th>Mappings</th></tr></thead>
+    <tbody>
+    {% for f in findings %}
+    <tr>
+      <td><span class="severity severity-{{ f.severity }}">{{ f.severity }}</span></td>
+      <td><code>{{ f.file }}</code></td>
+      <td>{{ f.line }}</td>
+      <td><code>{{ f.rule_id }}</code></td>
+      <td>{{ f.message }}</td>
+      <td>{% if f.cwe %}<span class="cwe-tag">{{ f.cwe }}</span>{% endif %}</td>
+      <td>
+        {% if f.atlas %}<span class="atlas-tag">{{ f.atlas }}</span>{% endif %}
+        {% if f.owasp_llm %}<span class="owasp-tag">{{ f.owasp_llm }}</span>{% endif %}
+      </td>
+    </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p style="color: var(--green); text-align: center; padding: 2rem;">No security findings detected.</p>
+  {% endif %}
+
+  <!-- OWASP LLM Top 10 Compliance -->
+  {% if owasp_entries %}
+  <h2>OWASP Top 10 for LLM Applications</h2>
+  <div class="compliance">
+    {% for entry in owasp_entries %}
+    <div class="compliance-card {{ 'pass' if entry.status == 'PASS' else 'fail' }}">
+      <span class="compliance-status {{ 'pass' if entry.status == 'PASS' else 'fail' }}">{{ entry.status }}</span>
+      <div class="compliance-id">{{ entry.id }}</div>
+      <div class="compliance-name">{{ entry.name }}</div>
+      {% if entry.findings_count > 0 %}
+      <div style="margin-top: 0.5rem; font-size: 0.75rem; color: var(--red);">{{ entry.findings_count }} finding(s)</div>
+      {% endif %}
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- MITRE ATLAS Coverage -->
+  {% if atlas_techniques %}
+  <h2>MITRE ATLAS Technique Coverage</h2>
+  <div style="display: flex; flex-wrap: wrap; gap: 4px;">
+    {% for tech in atlas_techniques %}
+    <span class="atlas-tag">{{ tech }}</span>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <div class="footer">
+    <p>Agentic AI Security Scanner — 20 engines, 391 rules, 25 MCP tools — MITRE ATLAS mapped</p>
+    <p>github.com/Krishcalin/Agentic-AI-Cyber-Security</p>
+  </div>
+</div>
+</body>
+</html>

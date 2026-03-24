@@ -1,0 +1,40 @@
+# Full Scan Profile
+# ─────────────────
+# Comprehensive scan with all engines enabled.
+# Includes AST analysis, taint tracking, package verification, and prompt scanning.
+# Typical runtime: 30-120 seconds for a medium project.
+
+name: full
+description: "Comprehensive scan with all engines enabled"
+
+engines:
+  pattern_matcher: true
+  ast_analyzer: true
+  taint_tracker: true
+  package_checker: true
+  prompt_scanner: true
+  semantic_reviewer: false  # Requires API key — enable explicitly
+  fix_generator: true
+
+severity_filter:
+  # Report all findings
+  min_severity: info
+
+output:
+  verbosity: full
+  format: terminal
+
+limits:
+  max_file_size: 10485760  # 10 MB
+  max_files: 5000
+  timeout_seconds: 300
+
+atlas:
+  # Map findings to MITRE ATLAS technique IDs
+  enabled: true
+
+packages:
+  # Verify all imports against bloom filters
+  check_imports: true
+  # Check dependency files for supply chain risks
+  check_dependencies: true
