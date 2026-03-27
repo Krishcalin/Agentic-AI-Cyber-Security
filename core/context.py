@@ -169,6 +169,24 @@ class ContextFilter:
 
         return filtered
 
+    # Files that are part of security tool internals (pattern definitions, fix templates)
+    SECURITY_TOOL_FILES = {
+        "fix_generator", "ast_analyzer", "taint_tracker", "pattern_matcher",
+        "prompt_scanner", "secrets_scanner", "model_scanner", "mcp_auditor",
+        "rag_scanner", "chain_detector", "redteam_generator", "clickbait_detector",
+        "llm_worm_detector", "inference_monitor", "tool_response_analyzer",
+    }
+
+    # Patterns indicating a line is defining security patterns, not using them
+    PATTERN_DEF_INDICATORS = [
+        '": "', "': '",  # dict literal values
+        "Sink(", "add(",  # sink/pattern definitions
+        "TAINT_SINKS", "TAINT_SOURCES", "DANGEROUS_CALLS", "BUILTIN_PATTERNS",
+        "SECRET_PATTERNS", "FALSE_POSITIVE_PATTERNS",
+        "injection_patterns", "compiled_patterns",
+        "fix_template", "FIX_TEMPLATES", "FIXES",
+    ]
+
     def _should_suppress(self, finding: Finding, context: ProjectContext) -> bool:
         """Check if a finding should be suppressed based on project context."""
         # In CLI tools, subprocess usage is expected
@@ -182,4 +200,31 @@ class ContextFilter:
             if "bind-all" in finding.rule_id and finding.severity == Severity.WARNING:
                 return True
 
+        # Suppress findings in security tool source files that are just pattern definitions
+        if self._is_security_tool_file(finding.file_path):
+            if self._is_pattern_definition_line(finding.line_content):
+                return True
+
+        # In library projects, suppress findings from YAML rule files
+        if context.project_type == "library":
+            fp = finding.file_path.replace("\\", "/")
+            if "/rules/" in fp and fp.endswith(".yaml"):
+                return True
+
+        return False
+
+    def _is_security_tool_file(self, file_path: str) -> bool:
+        """Check if file is part of security tool internals."""
+        name = Path(file_path).stem
+        return name in self.SECURITY_TOOL_FILES
+
+    def _is_pattern_definition_line(self, line_content: str) -> bool:
+        """Check if a line is defining patterns/sinks rather than executing code."""
+        stripped = line_content.strip()
+        # Lines that are string constants in lists/dicts/tuples
+        if any(indicator in stripped for indicator in self.PATTERN_DEF_INDICATORS):
+            return True
+        # Lines that are pure string assignments used as templates
+        if stripped.startswith(("'", '"', "r'", 'r"', "f'", 'f"')) and "=" not in stripped[:5]:
+            return True
         return False

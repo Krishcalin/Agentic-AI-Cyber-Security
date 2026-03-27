@@ -42,6 +42,16 @@ dev = ["pytest>=7.0", "pytest-cov>=4.0", "ruff>=0.1.0", "mypy>=1.5"]
 [project.scripts]
 agentic-scan = "cli.main:cli"
 
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+include = ["core*", "cli*", "integrations*", "mcp_server*"]
+exclude = ["tests*", "benchmarks*", "scripts*"]
+
+[tool.setuptools.package-data]
+"*" = ["*.yaml", "*.yml", "*.html", "*.jinja2"]
+
 [tool.ruff]
 target-version = "py310"
 line-length = 120

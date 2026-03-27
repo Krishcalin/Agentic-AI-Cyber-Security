@@ -12,7 +12,9 @@ import structlog
 
 from core.ast_analyzer import ASTAnalyzer
 from core.context import ContextFilter, ProjectContext
+from core.cross_file_taint import CrossFileTaintTracker
 from core.grader import calculate_grade
+from core.js_ast_analyzer import JSASTAnalyzer
 from core.models import FileResult, Finding, ScanResult, detect_language
 from core.pattern_matcher import PatternMatcher
 from core.taint_tracker import TaintTracker
@@ -25,9 +27,12 @@ class ScanEngine:
     taint tracking, grading, and context-aware filtering."""
 
     def __init__(self, rules_dir: str = "rules") -> None:
+        self._rules_dir = rules_dir
         self.pattern_matcher = PatternMatcher(rules_dir)
         self.ast_analyzer = ASTAnalyzer()
+        self.js_ast_analyzer = JSASTAnalyzer()
         self.taint_tracker = TaintTracker()
+        self.cross_file_taint = CrossFileTaintTracker()
         self.context_filter = ContextFilter()
         self.rules_loaded = 0
 
@@ -57,6 +62,9 @@ class ScanEngine:
 
             taint_result = self.taint_tracker.analyze_file(file_path)
             taint_findings = taint_result.findings
+        elif language in ("javascript", "typescript"):
+            js_result = self.js_ast_analyzer.analyze_file(file_path)
+            ast_findings = js_result.findings
 
         # Merge and deduplicate findings
         all_findings = self._merge_findings(
@@ -101,6 +109,15 @@ class ScanEngine:
 
         start = datetime.now()
 
+        # Auto-exclude rules directory if scanning own project
+        exclude = list(exclude or [])
+        rules_dir = Path(self._rules_dir).resolve()
+        scan_dir = Path(directory).resolve()
+        if rules_dir.is_relative_to(scan_dir):
+            rel_rules = str(rules_dir.relative_to(scan_dir))
+            if rel_rules not in exclude:
+                exclude.append(rel_rules)
+
         # Detect project context for smart filtering
         context = self.context_filter.detect_project_context(directory)
 
@@ -133,13 +150,42 @@ class ScanEngine:
                     lines_scanned=pr.lines_scanned,
                     scan_time_ms=pr.scan_time_ms,
                 ))
+            elif pr.language in ("javascript", "typescript") and not pr.error:
+                # Run JS AST analyzer
+                js_result = self.js_ast_analyzer.analyze_file(pr.file_path)
+                merged_findings = self._merge_findings(pr.findings, js_result.findings)
+                merged_findings = self.context_filter.filter_findings(
+                    merged_findings, context, exclude_tests=exclude_tests
+                )
+                file_results.append(FileResult(
+                    file_path=pr.file_path,
+                    language=pr.language,
+                    findings=merged_findings,
+                    lines_scanned=pr.lines_scanned,
+                    scan_time_ms=pr.scan_time_ms,
+                ))
             else:
-                # Non-Python: pattern results only, still apply context filter
+                # Other languages: pattern results only, still apply context filter
                 filtered = self.context_filter.filter_findings(
                     pr.findings, context, exclude_tests=exclude_tests
                 )
                 pr.findings = filtered
                 file_results.append(pr)
+
+        # Cross-file taint analysis
+        try:
+            cross_findings = self.cross_file_taint.analyze_project(directory, exclude)
+            if cross_findings:
+                # Add cross-file findings to the relevant file results
+                cross_by_file: dict[str, list[Finding]] = {}
+                for cf in cross_findings:
+                    cross_by_file.setdefault(cf.file_path, []).append(cf)
+                for fr in file_results:
+                    abs_path = str(Path(fr.file_path).resolve())
+                    if abs_path in cross_by_file:
+                        fr.findings.extend(cross_by_file[abs_path])
+        except Exception as e:
+            log.warning("cross_file_taint_error", error=str(e))
 
         result = ScanResult(
             scan_id=uuid.uuid4().hex[:8],
